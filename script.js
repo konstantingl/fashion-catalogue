@@ -19,7 +19,10 @@ class FashionCatalogue {
         this.searchTimeout = null;
         this.searchIndex = [];
         this.stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should']);
-        
+
+        // Analytics tracking
+        this.searchStartTime = null;
+
         this.init();
     }
 
@@ -481,8 +484,9 @@ class FashionCatalogue {
 
     saveBrandFilters() {
         const checkboxes = document.querySelectorAll('#brand-options input[type="checkbox"]');
+        const previousBrands = new Set(this.filters.brands);
         this.filters.brands.clear();
-        
+
         checkboxes.forEach(cb => {
             if (cb.checked) {
                 this.filters.brands.add(cb.dataset.value);
@@ -492,12 +496,23 @@ class FashionCatalogue {
         this.closeDropdown('brand');
         this.updateFilterButtons();
         this.applyFilters();
+
+        // Track filter event
+        if (window.analytics) {
+            window.analytics.trackFilter(
+                'brand',
+                'save',
+                'brands',
+                Array.from(this.filters.brands),
+                this.filteredProducts.length
+            );
+        }
     }
 
     saveCategoryFilters() {
         const checkboxes = document.querySelectorAll('#category-options input[type="checkbox"]');
         this.filters.categories.clear();
-        
+
         checkboxes.forEach(cb => {
             if (cb.checked) {
                 this.filters.categories.add(cb.dataset.value);
@@ -508,18 +523,40 @@ class FashionCatalogue {
         this.updateFilterButtons();
         this.renderDynamicAttributeFilters();
         this.applyFilters();
+
+        // Track filter event
+        if (window.analytics) {
+            window.analytics.trackFilter(
+                'category',
+                'save',
+                'categories',
+                Array.from(this.filters.categories),
+                this.filteredProducts.length
+            );
+        }
     }
 
     savePriceFilters() {
         const minPrice = document.getElementById('min-price').value;
         const maxPrice = document.getElementById('max-price').value;
-        
+
         this.filters.priceMin = minPrice ? parseFloat(minPrice) : null;
         this.filters.priceMax = maxPrice ? parseFloat(maxPrice) : null;
 
         this.closeDropdown('price');
         this.updateFilterButtons();
         this.applyFilters();
+
+        // Track filter event
+        if (window.analytics) {
+            window.analytics.trackFilter(
+                'price',
+                'save',
+                'price_range',
+                { min: this.filters.priceMin, max: this.filters.priceMax },
+                this.filteredProducts.length
+            );
+        }
     }
 
     resetBrandFilters() {
@@ -693,8 +730,10 @@ class FashionCatalogue {
         const clearButton = document.getElementById('search-clear');
         if (query.length > 0) {
             clearButton.style.display = 'block';
+            this.searchStartTime = new Date();
         } else {
             clearButton.style.display = 'none';
+            this.searchStartTime = null;
         }
 
         // Debounce search - wait 300ms after user stops typing
@@ -702,19 +741,37 @@ class FashionCatalogue {
             this.filters.searchQuery = query.toLowerCase().trim();
             this.applyFilters();
             this.updateSearchResultsInfo();
+
+            // Track search event
+            if (window.analytics && query.trim().length > 0) {
+                const duration = this.searchStartTime ? new Date() - this.searchStartTime : null;
+                window.analytics.trackSearch(
+                    query.trim(),
+                    this.filteredProducts.length,
+                    duration,
+                    false
+                );
+            }
         }, 300);
     }
 
     clearSearch() {
         const searchInput = document.getElementById('search-input');
         const clearButton = document.getElementById('search-clear');
-        
+
+        const previousQuery = this.filters.searchQuery;
+
         searchInput.value = '';
         clearButton.style.display = 'none';
         this.filters.searchQuery = '';
-        
+
         this.applyFilters();
         this.updateSearchResultsInfo();
+
+        // Track search clear event
+        if (window.analytics && previousQuery) {
+            window.analytics.trackSearch(previousQuery, 0, null, true);
+        }
     }
 
     updateSearchResultsInfo() {
@@ -883,9 +940,21 @@ class FashionCatalogue {
 
     loadMoreProducts() {
         if (this.isLoading) return;
-        
+
         this.isLoading = true;
         document.getElementById('loading-indicator').style.display = 'block';
+
+        // Track load more event
+        if (window.analytics && this.currentPage > 0) {
+            window.analytics.trackEvent('click', 'load_more_button', {
+                metadata: {
+                    currentPage: this.currentPage,
+                    displayedProductsCount: this.displayedProducts.length,
+                    totalFilteredProducts: this.filteredProducts.length,
+                    filtersActive: Object.keys(this.getActiveFilters()).length
+                }
+            });
+        }
 
         setTimeout(() => {
             const startIndex = this.currentPage * this.itemsPerPage;
@@ -901,11 +970,11 @@ class FashionCatalogue {
             }
 
             this.currentPage++;
-            
+
             const hasMoreProducts = endIndex < this.filteredProducts.length;
             document.getElementById('load-more-btn').style.display = hasMoreProducts ? 'block' : 'none';
             document.getElementById('loading-indicator').style.display = 'none';
-            
+
             this.isLoading = false;
         }, 300);
     }
@@ -930,7 +999,18 @@ class FashionCatalogue {
     createProductCard(product) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            // Track product click
+            if (window.analytics) {
+                window.analytics.trackProductInteraction(product, 'click', {
+                    positionInList: this.displayedProducts.indexOf(product),
+                    metadata: {
+                        currentPage: this.currentPage,
+                        isFiltered: this.filteredProducts.length < this.allProducts.length,
+                        searchQuery: this.filters.searchQuery || null
+                    }
+                });
+            }
             window.open(product.original_data.item_page_url, '_blank');
         });
 
@@ -988,6 +1068,24 @@ class FashionCatalogue {
     switchImage(dot) {
         const index = parseInt(dot.dataset.index);
         const container = dot.closest('.product-image-container');
+
+        // Track image navigation
+        if (window.analytics) {
+            const productCard = container.closest('.product-card');
+            const productIndex = Array.from(document.querySelectorAll('.product-card')).indexOf(productCard);
+
+            if (productIndex >= 0 && this.displayedProducts[productIndex]) {
+                window.analytics.trackProductInteraction(
+                    this.displayedProducts[productIndex],
+                    'image_navigation',
+                    {
+                        imageIndex: index,
+                        positionInList: productIndex
+                    }
+                );
+            }
+        }
+
         this.switchToImageIndex(container, index);
     }
     
@@ -1149,9 +1247,57 @@ class FashionCatalogue {
                    .toLowerCase()
                    .replace(/\b\w/g, l => l.toUpperCase());
     }
+
+    getActiveFilters() {
+        const activeFilters = {};
+
+        if (this.filters.brands.size > 0) {
+            activeFilters.brands = Array.from(this.filters.brands);
+        }
+
+        if (this.filters.categories.size > 0) {
+            activeFilters.categories = Array.from(this.filters.categories);
+        }
+
+        if (this.filters.priceMin !== null || this.filters.priceMax !== null) {
+            activeFilters.price = {
+                min: this.filters.priceMin,
+                max: this.filters.priceMax
+            };
+        }
+
+        if (Object.keys(this.filters.attributes).length > 0) {
+            activeFilters.attributes = {};
+            Object.entries(this.filters.attributes).forEach(([key, values]) => {
+                activeFilters.attributes[key] = Array.from(values);
+            });
+        }
+
+        if (this.filters.searchQuery) {
+            activeFilters.search = this.filters.searchQuery;
+        }
+
+        return activeFilters;
+    }
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new FashionCatalogue();
+    // Initialize analytics if configured
+    if (window.CONFIG && window.CONFIG.ANALYTICS_ENABLED) {
+        try {
+            window.analytics = initializeAnalytics(
+                window.CONFIG.SUPABASE_URL,
+                window.CONFIG.SUPABASE_ANON_KEY
+            );
+
+            if (window.CONFIG.DEBUG_MODE) {
+                console.log('Analytics initialized successfully');
+            }
+        } catch (error) {
+            console.error('Failed to initialize analytics:', error);
+        }
+    }
+
+    window.fashionCatalogue = new FashionCatalogue();
 });
