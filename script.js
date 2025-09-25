@@ -92,9 +92,15 @@ class FashionCatalogue {
         if (!text) return '';
         return text.toLowerCase()
             .replace(/[^\w\s]/g, ' ')  // Replace punctuation with spaces
-            .replace(/[-_]/g, ' ')     // Convert hyphens/underscores to spaces  
+            .replace(/[-_]/g, ' ')     // Convert hyphens/underscores to spaces
             .replace(/\s+/g, ' ')      // Normalize multiple spaces
             .trim();
+    }
+
+    // Convert text to sentence case (first letter capitalized, rest lowercase)
+    toSentenceCase(text) {
+        if (!text) return '';
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
     }
 
     tokenize(text) {
@@ -382,11 +388,11 @@ class FashionCatalogue {
     openDropdown(type) {
         const button = document.getElementById(`${type}-button`);
         const panel = document.getElementById(`${type}-panel`);
-        
+
         button.classList.add('active');
         panel.classList.add('show');
         this.activeDropdown = type;
-        
+
         // Focus search input if available
         const searchInput = panel.querySelector('.filter-search');
         if (searchInput) {
@@ -397,7 +403,7 @@ class FashionCatalogue {
     closeDropdown(type) {
         const button = document.getElementById(`${type}-button`);
         const panel = document.getElementById(`${type}-panel`);
-        
+
         button.classList.remove('active');
         panel.classList.remove('show');
         this.activeDropdown = null;
@@ -674,11 +680,11 @@ class FashionCatalogue {
     toggleDynamicDropdown(container, attribute) {
         const button = container.querySelector('.filter-button');
         const panel = container.querySelector('.filter-dropdown-panel');
-        
+
         const isOpen = button.classList.contains('active');
-        
+
         this.closeAllDropdowns();
-        
+
         if (!isOpen) {
             button.classList.add('active');
             panel.classList.add('show');
@@ -709,7 +715,7 @@ class FashionCatalogue {
         container.querySelector('.filter-button').classList.remove('active');
         container.querySelector('.filter-dropdown-panel').classList.remove('show');
         this.activeDropdown = null;
-        
+
         this.updateFilterButtons();
         this.applyFilters();
     }
@@ -1037,7 +1043,7 @@ class FashionCatalogue {
             </div>
             <div class="product-info">
                 <div class="product-brand">${product.original_data.brand || ''}</div>
-                <div class="product-title">${product.original_data.title || 'Untitled'}</div>
+                <div class="product-title">${this.toSentenceCase(product.original_data.title) || 'Untitled'}</div>
                 <div class="product-price">${product.original_data.price_eur ? `€${product.original_data.price_eur}` : 'Price not available'}</div>
             </div>
         `;
