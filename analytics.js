@@ -578,7 +578,8 @@ class UserAnalytics {
             anonymous_user_id: this.anonymousUserId,
             pattern_type: patternType,
             pattern_data: patternData,
-            timestamp: new Date().toISOString()
+            first_observed: new Date().toISOString(),
+            last_observed: new Date().toISOString()
         };
 
         this.eventQueue.push({

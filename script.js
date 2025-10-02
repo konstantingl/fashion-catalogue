@@ -31,6 +31,13 @@ class FashionCatalogue {
         this.setupEventListeners();
         this.renderFilters();
         this.applyFilters();
+
+        // Refresh favorites UI after initial load
+        setTimeout(() => {
+            if (window.favoritesManager) {
+                window.favoritesManager.refreshFavoritesUI();
+            }
+        }, 1000); // Give some time for everything to initialize
     }
 
     async loadData() {
@@ -993,13 +1000,22 @@ class FashionCatalogue {
 
     appendProducts(products) {
         const container = document.getElementById('products-grid');
-        
+
         products.forEach(product => {
             const card = this.createProductCard(product);
             container.appendChild(card);
         });
 
         this.initializeImageSliders();
+        this.initializeFavoriteButtons();
+
+        // Update favorite button states after products are rendered
+        if (window.favoritesManager) {
+            window.favoritesManager.updateFavoriteButtons();
+        }
+
+        // Dispatch event that products have been rendered
+        document.dispatchEvent(new CustomEvent('productsRendered'));
     }
 
     createProductCard(product) {
@@ -1042,9 +1058,20 @@ class FashionCatalogue {
                 ` : ''}
             </div>
             <div class="product-info">
-                <div class="product-brand">${product.original_data.brand || ''}</div>
-                <div class="product-title">${this.toSentenceCase(product.original_data.title) || 'Untitled'}</div>
-                <div class="product-price">${product.original_data.price_eur ? `€${product.original_data.price_eur}` : 'Price not available'}</div>
+                <div class="product-header">
+                    <div class="product-text">
+                        <div class="product-brand">${product.original_data.brand || ''}</div>
+                        <div class="product-title">${this.toSentenceCase(product.original_data.title) || 'Untitled'}</div>
+                        <div class="product-price">${product.original_data.price_eur ? `€${product.original_data.price_eur}` : 'Price not available'}</div>
+                    </div>
+                    <button class="favorite-btn" data-product-id="${product.id || product.original_data.item_page_url}"
+                            aria-label="Add to favorites" title="Add to favorites">
+                        <svg class="heart-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         `;
 
@@ -1201,6 +1228,68 @@ class FashionCatalogue {
         imagesContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
     }
 
+    initializeFavoriteButtons() {
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            if (!btn.hasAttribute('data-listener')) {
+                btn.setAttribute('data-listener', 'true');
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent product card click
+                    this.handleFavoriteClick(btn);
+                });
+            }
+        });
+    }
+
+    async handleFavoriteClick(btn) {
+        const productId = btn.dataset.productId;
+
+        // Check if user is authenticated
+        if (!window.authManager || !window.authManager.isAuthenticated()) {
+            // Show login modal
+            if (window.authUI) {
+                window.authUI.showModal('login');
+            } else {
+                alert('Please log in to add favorites');
+            }
+            return;
+        }
+
+        // Check if favorites manager is available
+        if (!window.favoritesManager) {
+            console.warn('Favorites manager not available');
+            return;
+        }
+
+        try {
+            const isFavorited = btn.classList.contains('favorited');
+
+            if (isFavorited) {
+                await window.favoritesManager.removeFavorite(productId);
+                btn.classList.remove('favorited');
+                btn.setAttribute('aria-label', 'Add to favorites');
+                btn.setAttribute('title', 'Add to favorites');
+            } else {
+                await window.favoritesManager.addFavorite(productId);
+                btn.classList.add('favorited');
+                btn.setAttribute('aria-label', 'Remove from favorites');
+                btn.setAttribute('title', 'Remove from favorites');
+            }
+
+            // Track analytics
+            if (window.analytics) {
+                window.analytics.trackEvent('click', isFavorited ? 'remove_favorite' : 'add_favorite', {
+                    productId: productId,
+                    metadata: {
+                        userId: window.authManager.getUserId()
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error handling favorite:', error);
+            alert('Error updating favorites. Please try again.');
+        }
+    }
+
     clearAllFilters() {
         this.filters.brands.clear();
         this.filters.categories.clear();
@@ -1288,7 +1377,7 @@ class FashionCatalogue {
 }
 
 // Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Initialize analytics if configured
     if (window.CONFIG && window.CONFIG.ANALYTICS_ENABLED) {
         try {
@@ -1302,6 +1391,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Failed to initialize analytics:', error);
+        }
+    }
+
+    // Initialize authentication system
+    if (window.CONFIG && window.CONFIG.AUTH_ENABLED) {
+        try {
+            await initializeAuth();
+            if (window.CONFIG.DEBUG_MODE) {
+                console.log('Authentication system initialized successfully');
+            }
+        } catch (error) {
+            console.error('Failed to initialize authentication:', error);
+        }
+    }
+
+    // Initialize favorites system (depends on auth)
+    if (window.CONFIG && window.CONFIG.AUTH_ENABLED) {
+        try {
+            await initializeFavorites();
+            if (window.CONFIG.DEBUG_MODE) {
+                console.log('Favorites system initialized successfully');
+            }
+        } catch (error) {
+            console.error('Failed to initialize favorites:', error);
         }
     }
 
