@@ -2,6 +2,11 @@
 // Replace these with your actual Supabase project credentials
 
 const CONFIG = {
+    // Search API settings
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'  // Local development
+        : 'https://fashion-search-api.vercel.app',  // Production
+
     SUPABASE_URL: 'https://coyfzbrasybilbxyrpyk.supabase.co', // e.g., 'https://your-project.supabase.co'
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveWZ6YnJhc3liaWxieHlycHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MjY3ODUsImV4cCI6MjA3NDMwMjc4NX0.HoS2ezSVx_6Qty-jaotmkFaGe-JqjlPlpQlog9XTJX0', // Your public anon key
 
