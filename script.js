@@ -3,7 +3,7 @@ const CONFIG = {
     // API Base URL - update this with your deployed Vercel API URL
     API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'  // Local development
-        : 'https://brandnest-search-api.vercel.app'  // Production - UPDATE THIS with your actual Vercel URL
+        : 'https://fashion-search-api.vercel.app'  // Production
 };
 
 class FashionCatalogue {
