@@ -1,3 +1,11 @@
+// Configuration
+const CONFIG = {
+    // API Base URL - update this with your deployed Vercel API URL
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'  // Local development
+        : 'https://brandnest-search-api.vercel.app'  // Production - UPDATE THIS with your actual Vercel URL
+};
+
 class FashionCatalogue {
     constructor() {
         this.allProducts = [];
@@ -709,10 +717,8 @@ class FashionCatalogue {
         try {
             console.log('Calling search API v2...');
 
-            // Determine API endpoint based on environment
-            const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:3000/api/search'  // Local development
-                : '/api/search';  // Production (Vercel)
+            // Use configured API base URL
+            const apiUrl = `${CONFIG.API_BASE_URL}/api/search`;
 
             // Call the new search engine API
             const response = await fetch(apiUrl, {
