@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Engine Debug UI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #999;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .search-box {
+      background: #1a1a1a;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    input {
+      flex: 1;
+      padding: 15px 20px;
+      background: #0f0f0f;
+      border: 2px solid #2a2a2a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      padding: 15px 35px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #2a2a2a;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .summary {
+      background: #1a1a1a;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .summary h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .summary-item {
+      background: #0f0f0f;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .summary-value.small {
+      font-size: 18px;
+    }
+
+    .stage {
+      background: #1a1a1a;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .stage-header h3 {
+      font-size: 18px;
+      color: #667eea;
+    }
+
+    .stage-timing {
+      font-size: 14px;
+      color: #999;
+      font-weight: normal;
+    }
+
+    .stage-content {
+      padding-top: 15px;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .stage-content.collapsed {
+      display: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 8px;
+    }
+
+    .badge.type1 { background: #667eea; color: white; }
+    .badge.type2 { background: #764ba2; color: white; }
+    .badge.en { background: #10b981; color: white; }
+    .badge.de { background: #f59e0b; color: white; }
+
+    .attribute-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .attribute-item {
+      background: #0f0f0f;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #2a2a2a;
+      font-size: 13px;
+    }
+
+    .attribute-key {
+      color: #999;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .attribute-value {
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .retrieval-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .retrieval-source {
+      background: #0f0f0f;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .source-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .source-title {
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .source-count {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .product-item {
+      background: #1a1a1a;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #2a2a2a;
+      font-size: 13px;
+    }
+
+    .product-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #e0e0e0;
+    }
+
+    .product-brand {
+      color: #667eea;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .product-meta {
+      color: #999;
+      font-size: 11px;
+    }
+
+    .weights {
+      display: flex;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .weight-bar {
+      flex: 1;
+      background: #0f0f0f;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+    }
+
+    .weight-label {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .weight-value {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      height: 8px;
+      transition: width 0.3s;
+    }
+
+    .consensus-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .consensus-item {
+      background: #0f0f0f;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #2a2a2a;
+    }
+
+    .consensus-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 5px;
+    }
+
+    .consensus-label {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .results-section {
+      background: #1a1a1a;
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .results-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #667eea;
+    }
+
+    .result-item {
+      background: #0f0f0f;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .result-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .result-score {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .match-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .match-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .match-badge.matched {
+      background: #10b981;
+      color: white;
+    }
+
+    .match-badge.missing {
+      background: #ef4444;
+      color: white;
+    }
+
+    .score-breakdown {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .score-item {
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .score-label {
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .score-value {
+      color: #667eea;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .error {
+      background: #ef4444;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .rank-changes {
+      margin: 15px 0;
+    }
+
+    .rank-change-item {
+      background: #0f0f0f;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #2a2a2a;
+    }
+
+    .rank-arrow {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .rank-arrow.up { color: #10b981; }
+    .rank-arrow.down { color: #ef4444; }
+    .rank-arrow.same { color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Search Engine Debug UI</h1>
+    <p class="subtitle">Real-time visualization of the AI-powered search pipeline</p>
+
+    <div class="search-box">
+      <div class="input-group">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Enter search query (e.g., long black trench with belt)"
+          value="long black trench with belt"
+        />
+        <button id="searchBtn" onclick="performSearch()">Search</button>
+      </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Analyzing search query...</p>
+    </div>
+
+    <div id="error" style="display: none;"></div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    let debugData = null;
+
+    // Allow Enter key to search
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') performSearch();
+    });
+
+    async function performSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return;
+
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const resultsEl = document.getElementById('results');
+      const searchBtn = document.getElementById('searchBtn');
+
+      // Show loading
+      loadingEl.style.display = 'block';
+      errorEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+      searchBtn.disabled = true;
+
+      try {
+        const response = await fetch('http://localhost:3001/api/search/debug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, limit: 10 })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        debugData = await response.json();
+        renderResults();
+      } catch (error) {
+        console.error('Search error:', error);
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = `
+          <div class="error">
+            <strong>Error:</strong> ${error.message}<br>
+            <small>Make sure the debug server is running on port 3001</small>
+          </div>
+        `;
+      } finally {
+        loadingEl.style.display = 'none';
+        searchBtn.disabled = false;
+      }
+    }
+
+    function renderResults() {
+      if (!debugData) return;
+
+      const resultsEl = document.getElementById('results');
+
+      resultsEl.innerHTML = `
+        ${renderSummary()}
+        ${renderStages()}
+        ${renderFinalResults()}
+      `;
+    }
+
+    function renderSummary() {
+      const { summary } = debugData;
+      return `
+        <div class="summary">
+          <h2>Summary</h2>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Total Time</div>
+              <div class="summary-value">${summary.total_time_ms}ms</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Query Type</div>
+              <div class="summary-value small">${summary.query_type}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Vector Results</div>
+              <div class="summary-value">${summary.retrieval_counts.vector}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Attribute Results</div>
+              <div class="summary-value">${summary.retrieval_counts.attribute}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Keyword Results</div>
+              <div class="summary-value">${summary.retrieval_counts.keyword}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Unique Items</div>
+              <div class="summary-value">${summary.fusion.unique_items}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStages() {
+      return debugData.debug.stages.map((stage, index) => {
+        if (stage.stage === 1) return renderStage1(stage);
+        if (stage.stage === 2) return renderStage2(stage);
+        if (stage.stage === 3) return renderStage3(stage);
+        if (stage.stage === 4) return renderStage4(stage);
+      }).join('');
+    }
+
+    function renderStage1(stage) {
+      const output = stage.output;
+      return `
+        <div class="stage">
+          <div class="stage-header" onclick="toggleStage(this)">
+            <h3>Stage 1: ${stage.name}</h3>
+            <span class="stage-timing">${stage.duration_ms}ms</span>
+          </div>
+          <div class="stage-content">
+            <div>
+              <span class="badge ${output.query_type.toLowerCase()}">${output.query_type}</span>
+              <span class="badge ${output.language}">${output.language.toUpperCase()}</span>
+              <span class="badge">Complexity: ${output.complexity_score.toFixed(2)}</span>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #999;">Categories</h4>
+            <div>${output.categories.join(', ') || 'None'}</div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #999;">Hard Attributes</h4>
+            <div class="attribute-grid">
+              ${Object.entries(output.hard_attributes || {}).map(([key, value]) => `
+                <div class="attribute-item">
+                  <div class="attribute-key">${key}</div>
+                  <div class="attribute-value">${value}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            ${output.soft_preferences.style_vibe ? `
+              <h4 style="margin-top: 20px; margin-bottom: 10px; color: #999;">Style Vibe</h4>
+              <div>${output.soft_preferences.style_vibe}</div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStage2(stage) {
+      const output = stage.output;
+      return `
+        <div class="stage">
+          <div class="stage-header" onclick="toggleStage(this)">
+            <h3>Stage 2: ${stage.name}</h3>
+            <span class="stage-timing">${stage.duration_ms}ms</span>
+          </div>
+          <div class="stage-content">
+            <div class="retrieval-grid">
+              ${renderRetrievalSource('Vector Search', output.vector)}
+              ${renderRetrievalSource('Attribute Filter', output.attribute)}
+              ${renderRetrievalSource('Keyword Search', output.keyword)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRetrievalSource(title, data) {
+      return `
+        <div class="retrieval-source">
+          <div class="source-header">
+            <div class="source-title">${title}</div>
+            <div class="source-count">${data.count}</div>
+          </div>
+          ${data.top_results.slice(0, 3).map(product => `
+            <div class="product-item">
+              <div class="product-title">${product.title}</div>
+              <div class="product-brand">${product.brand}</div>
+              <div class="product-meta">${product.category}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderStage3(stage) {
+      const output = stage.output;
+      return `
+        <div class="stage">
+          <div class="stage-header" onclick="toggleStage(this)">
+            <h3>Stage 3: ${stage.name}</h3>
+            <span class="stage-timing">${stage.duration_ms}ms</span>
+          </div>
+          <div class="stage-content">
+            <h4 style="margin-bottom: 15px; color: #999;">Fusion Weights</h4>
+            <div class="weights">
+              <div class="weight-bar">
+                <div class="weight-label">Keyword (${(output.weights.keyword * 100).toFixed(0)}%)</div>
+                <div class="weight-value" style="width: ${output.weights.keyword * 100}%"></div>
+              </div>
+              <div class="weight-bar">
+                <div class="weight-label">Vector (${(output.weights.vector * 100).toFixed(0)}%)</div>
+                <div class="weight-value" style="width: ${output.weights.vector * 100}%"></div>
+              </div>
+              <div class="weight-bar">
+                <div class="weight-label">Attribute (${(output.weights.attribute * 100).toFixed(0)}%)</div>
+                <div class="weight-value" style="width: ${output.weights.attribute * 100}%"></div>
+              </div>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #999;">Consensus Statistics</h4>
+            <div class="consensus-stats">
+              <div class="consensus-item">
+                <div class="consensus-number">${output.consensus_stats.all3}</div>
+                <div class="consensus-label">In All 3 Sources</div>
+              </div>
+              <div class="consensus-item">
+                <div class="consensus-number">${output.consensus_stats.any2}</div>
+                <div class="consensus-label">In Any 2 Sources</div>
+              </div>
+              <div class="consensus-item">
+                <div class="consensus-number">${output.consensus_stats.only1}</div>
+                <div class="consensus-label">Only 1 Source</div>
+              </div>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #999;">Score Distribution</h4>
+            <div class="attribute-grid">
+              <div class="attribute-item">
+                <div class="attribute-key">Min</div>
+                <div class="attribute-value">${output.score_distribution.min.toFixed(4)}</div>
+              </div>
+              <div class="attribute-item">
+                <div class="attribute-key">Max</div>
+                <div class="attribute-value">${output.score_distribution.max.toFixed(4)}</div>
+              </div>
+              <div class="attribute-item">
+                <div class="attribute-key">Average</div>
+                <div class="attribute-value">${output.score_distribution.avg.toFixed(4)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStage4(stage) {
+      const output = stage.output;
+      return `
+        <div class="stage">
+          <div class="stage-header" onclick="toggleStage(this)">
+            <h3>Stage 4: ${stage.name}</h3>
+            <span class="stage-timing">${stage.duration_ms}ms</span>
+          </div>
+          <div class="stage-content">
+            <h4 style="margin-bottom: 15px; color: #999;">Rank Changes (Top 10)</h4>
+            <div class="rank-changes">
+              ${output.rank_changes.map(change => {
+                const arrow = change.change > 0 ? '↑' : change.change < 0 ? '↓' : '→';
+                const arrowClass = change.change > 0 ? 'up' : change.change < 0 ? 'down' : 'same';
+                return `
+                  <div class="rank-change-item">
+                    <div>
+                      <div style="font-size: 13px; font-weight: 600;">${change.product}</div>
+                      <div style="font-size: 11px; color: #999;">Rank ${change.old_rank} → ${change.new_rank}</div>
+                    </div>
+                    <div class="rank-arrow ${arrowClass}">${arrow} ${Math.abs(change.change)}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFinalResults() {
+      return `
+        <div class="results-section">
+          <h2>Final Results (Top 10)</h2>
+          ${debugData.results.map((result, index) => `
+            <div class="result-item">
+              <div class="result-header">
+                <div>
+                  <div style="color: #667eea; font-size: 13px; font-weight: 600; margin-bottom: 4px;">#${index + 1}</div>
+                  <div class="result-title">${result.title}</div>
+                </div>
+                <div class="result-score">${result.relevance_score.toFixed(4)}</div>
+              </div>
+              <div class="result-meta">
+                <span><strong>Brand:</strong> ${result.brand}</span>
+                <span><strong>Price:</strong> €${result.price_eur}</span>
+                <span><strong>Category:</strong> ${result.enriched_category}</span>
+              </div>
+
+              <div class="match-badges">
+                ${result.match_explanation.attribute_matches.map(attr =>
+                  `<span class="match-badge matched">✓ ${attr}</span>`
+                ).join('')}
+                ${result.match_explanation.missing_attributes.map(attr =>
+                  `<span class="match-badge missing">✗ ${attr}</span>`
+                ).join('')}
+              </div>
+
+              <div class="score-breakdown">
+                <div class="score-item">
+                  <div class="score-label">Fusion Score</div>
+                  <div class="score-value">${result.match_explanation.fusion_score.toFixed(4)}</div>
+                </div>
+                <div class="score-item">
+                  <div class="score-label">Attribute Score</div>
+                  <div class="score-value">${result.match_explanation.attribute_score.toFixed(4)}</div>
+                </div>
+                <div class="score-item">
+                  <div class="score-label">Sources</div>
+                  <div class="score-value">${result.match_explanation.sources.join(', ')}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function toggleStage(header) {
+      const content = header.nextElementSibling;
+      content.classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>

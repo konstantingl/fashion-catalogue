@@ -1,0 +1,188 @@
+{
+  "jackets": {
+    "fields": ["color", "fit", "length", "closure", "collar"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "length": ["CROPPED", "REGULAR", "LONG"],
+      "closure": ["ZIP", "BUTTON", "BELTED", "OPEN"],
+      "collar": ["STAND", "SPREAD", "NOTCH", "NO_COLLAR"]
+    }
+  },
+  "coats": {
+    "fields": ["color", "silhouette", "length", "closure", "collar"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "silhouette": ["STRAIGHT", "WRAP", "OVERSIZED", "BELTED", "A_LINE"],
+      "length": ["KNEE", "MIDI", "MAXI"],
+      "closure": ["SINGLE_BREASTED", "DOUBLE_BREASTED", "ZIP", "OPEN"],
+      "collar": ["NOTCH", "SHAWL", "STAND", "NO_COLLAR"]
+    }
+  },
+  "trench_coats_parkas": {
+    "fields": ["color", "length", "closure", "hood", "belt"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "length": ["KNEE", "MIDI", "MAXI"],
+      "closure": ["BUTTON", "ZIP", "SNAP"],
+      "hood": ["YES", "NO"],
+      "belt": ["YES", "NO"]
+    }
+  },
+  "blazers": {
+    "fields": ["color", "fit", "closure", "length", "lapel"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "closure": ["SINGLE_BREASTED", "DOUBLE_BREASTED", "OPEN"],
+      "length": ["CROPPED", "REGULAR", "LONGLINE"],
+      "lapel": ["NOTCH", "PEAK", "SHAWL", "NO_LAPEL"]
+    }
+  },
+  "vests": {
+    "fields": ["color", "fit", "length", "closure"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "length": ["CROPPED", "REGULAR", "LONG"],
+      "closure": ["BUTTON", "ZIP", "OPEN", "BELTED"]
+    }
+  },
+  "leather_jackets": {
+    "fields": ["color", "style", "length", "closure", "collar"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "style": ["BOMBER", "BIKER", "BLAZER_STYLE", "OVERSIZED"],
+      "length": ["CROPPED", "REGULAR", "LONG"],
+      "closure": ["ZIP", "BUTTON", "BELTED", "OPEN"],
+      "collar": ["BAND", "NOTCH", "SPREAD", "NO_COLLAR"]
+    }
+  },
+  "sweaters_pullovers": {
+    "fields": ["color", "fit", "neckline", "sleeve_length", "length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "neckline": ["CREW", "V_NECK", "TURTLENECK", "BOAT", "SQUARE", "SCOOP"],
+      "sleeve_length": ["SLEEVELESS", "SHORT", "THREE_QUARTER", "LONG"],
+      "length": ["CROPPED", "REGULAR", "LONG"]
+    }
+  },
+  "cardigans": {
+    "fields": ["color", "fit", "closure", "length", "sleeve_length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "closure": ["BUTTON", "ZIP", "OPEN", "BELTED"],
+      "length": ["CROPPED", "REGULAR", "LONG"],
+      "sleeve_length": ["SHORT", "THREE_QUARTER", "LONG"]
+    }
+  },
+  "tops_camisoles": {
+    "fields": ["color", "style", "neckline", "sleeve_length", "length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "style": ["CAMISOLE", "CROP_TOP", "TANK", "BUSTIER"],
+      "neckline": ["CREW", "V_NECK", "SQUARE", "HALTER", "STRAPLESS", "SWEETHEART", "SCOOP"],
+      "sleeve_length": ["SLEEVELESS", "SHORT", "THREE_QUARTER", "LONG"],
+      "length": ["CROPPED", "REGULAR", "LONG"]
+    }
+  },
+  "tshirts": {
+    "fields": ["color", "fit", "neckline", "sleeve_length", "length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "neckline": ["CREW", "V_NECK", "SCOOP", "BOAT"],
+      "sleeve_length": ["SLEEVELESS", "SHORT", "THREE_QUARTER", "LONG"],
+      "length": ["CROPPED", "REGULAR", "LONG"]
+    }
+  },
+  "shirts_blouses": {
+    "fields": ["color", "fit", "closure", "sleeve_length", "collar"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "fit": ["SLIM", "REGULAR", "OVERSIZED"],
+      "closure": ["BUTTON_FRONT", "HENLEY", "WRAP"],
+      "sleeve_length": ["SLEEVELESS", "SHORT", "THREE_QUARTER", "LONG"],
+      "collar": ["POINT", "SPREAD", "MANDARIN", "NO_COLLAR"]
+    }
+  },
+  "bodysuits": {
+    "fields": ["color", "neckline", "sleeve_length", "closure_bottom"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "neckline": ["CREW", "V_NECK", "SQUARE", "HALTER", "STRAPLESS", "SWEETHEART"],
+      "sleeve_length": ["SLEEVELESS", "SHORT", "LONG"],
+      "closure_bottom": ["SNAP", "NO_CLOSURE"]
+    }
+  },
+  "jeans": {
+    "fields": ["color", "cut","rise","leg_length","fit"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "cut": ["SKINNY","SLIM","STRAIGHT","MOM","DAD","BOYFRIEND","GIRLFRIEND","TAPERED","WIDE","FLARE","BOOTCUT","CARGO","BALLOON","BARREL"],
+      "rise": ["LOW","MID","HIGH","SUPER_HIGH"],
+      "leg_length": ["CROPPED","ANKLE","FULL","LONG"],
+      "fit": ["TIGHT","REGULAR","RELAXED","LOOSE"]
+    }
+  },
+  "trousers_pants": {
+    "fields": ["color", "cut","rise","length","fit"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "cut": ["STRAIGHT","WIDE","TAPERED","CARGO","FLARE","BOOTCUT","JOGGER","PLEATED"],
+      "rise": ["LOW","MID","HIGH"],
+      "length": ["CROPPED","ANKLE","FULL","LONG"],
+      "fit": ["SLIM","REGULAR","RELAXED","OVERSIZED"]
+    }
+  },
+  "shorts": {
+    "fields": ["color", "rise","length","fit","closure"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "rise": ["LOW","MID","HIGH"],
+      "length": ["VERY_SHORT","SHORT","BERMUDA"],
+      "fit": ["SLIM","REGULAR","RELAXED"],
+      "closure": ["BUTTON","ZIP","DRAWSTRING","ELASTIC"]
+    }
+  },
+  "skirts": {
+    "fields": ["color", "silhouette","length","rise"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "silhouette": ["STRAIGHT","A_LINE","PLEATED","PENCIL","WRAP","FLARED"],
+      "length": ["MINI","MIDI","MAXI"],
+      "rise": ["LOW","MID","HIGH"]
+    }
+  },
+  "dresses": {
+    "fields": ["color", "silhouette","length","neckline","sleeve_length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "silhouette": ["A_LINE","FIT_AND_FLARE","BODYCON","WRAP","SHIFT","SLIP","SHIRT","EMPIRE"],
+      "length": ["MINI","MIDI","MAXI"],
+      "neckline": ["V_NECK","CREW","SQUARE","HALTER","STRAPLESS","SWEETHEART","SCOOP","BOAT","OFF_SHOULDER","ONE_SHOULDER"],
+      "sleeve_length": ["SLEEVELESS","SHORT","THREE_QUARTER","LONG"]
+    }
+  },
+  "jumpsuits_playsuits": {
+    "fields": ["color", "silhouette","length","sleeve_length","fit"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "silhouette": ["UTILITY","TAILORED","WRAP","RELAXED","WIDE_LEG","SHORT"],
+      "length": ["SHORT","CROPPED","FULL"],
+      "sleeve_length": ["SLEEVELESS","SHORT","LONG"],
+      "fit": ["SLIM","REGULAR","RELAXED","OVERSIZED"]
+    }
+  },
+  "co_ord_sets": {
+    "fields": ["color", "type","fit","length"],
+    "enums": {
+      "color": ["BLACK", "WHITE", "GREY", "BEIGE", "BROWN", "BLUE", "RED", "GREEN", "PINK", "YELLOW", "ORANGE", "PURPLE", "MULTICOLOR"],
+      "type": ["TOP_AND_SKIRT","TOP_AND_TROUSERS","TOP_AND_SHORTS"],
+      "fit": ["SLIM","REGULAR","OVERSIZED"],
+      "length": ["CROPPED","REGULAR","LONG"]
+    }
+  }
+}

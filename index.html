@@ -3,10 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrandNest - Discover top brands in one catalogue</title>
+    <title>BrandNest - The Stylist's Fashion Search Engine | AI-Powered</title>
+    <!-- Performance: Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://images.unsplash.com">
+
+    <!-- Performance: Preload critical fonts -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/playfairdisplay/v30/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQZNLo_U2r.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- Fonts with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,16 +24,96 @@
         <div class="container">
             <div class="brand-section">
                 <h1 class="brandnest-heading">BrandNest</h1>
-                <p class="brandnest-subtitle">Discover top brands in one catalogue</p>
-                <div class="stats">
-                    <span id="results-count">Loading...</span>
-                </div>
+                <p class="brandnest-subtitle">The stylist's fashion search engine—12,000+ items instantly</p>
             </div>
             
         </div>
     </header>
 
     <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="hero-grid">
+                    <div class="hero-content">
+                        <div class="hero-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" opacity="0.3"/>
+                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            AI-Powered
+                        </div>
+                        <h2 class="hero-title">The Stylist's Fashion<br>Search Engine</h2>
+                        <p class="hero-subtitle">Stop switching between brand websites. Search 12,000+ items by cut, silhouette, and style across Zara, H&M, Mango & Massimo Dutti with AI-powered precision.</p>
+                        <div class="hero-cta">
+                            <button class="btn-primary" onclick="document.querySelector('.filter-hint').scrollIntoView({behavior: 'smooth'}); setTimeout(() => document.getElementById('category-button').click(), 300)">
+                                Try Smart Search
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button class="btn-secondary" onclick="alert('For Stylists page coming soon! This will showcase use cases and testimonials.')">
+                                For Stylists
+                            </button>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat">
+                                <span class="stat-number" id="hero-products-count">12,000+</span>
+                                <span class="stat-label">Items</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">4</span>
+                                <span class="stat-label">Top Brands</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">50+</span>
+                                <span class="stat-label">Smart Filters</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-image-card">
+                            <picture>
+                                <!-- Desktop: Landscape crop 800x600 -->
+                                <source
+                                    media="(min-width: 1025px)"
+                                    type="image/webp"
+                                    srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&h=600&fit=crop&q=80&fm=webp">
+                                <source
+                                    media="(min-width: 1025px)"
+                                    type="image/jpeg"
+                                    srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&h=600&fit=crop&q=80">
+
+                                <!-- Tablet: Square crop 600x600 -->
+                                <source
+                                    media="(min-width: 769px)"
+                                    type="image/webp"
+                                    srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&h=600&fit=crop&q=80&fm=webp">
+                                <source
+                                    media="(min-width: 769px)"
+                                    type="image/jpeg"
+                                    srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&h=600&fit=crop&q=80">
+
+                                <!-- Mobile: Portrait crop 500x750 -->
+                                <source
+                                    type="image/webp"
+                                    srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&h=750&fit=crop&q=80&fm=webp">
+
+                                <!-- Fallback -->
+                                <img
+                                    src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&h=750&fit=crop&q=80"
+                                    alt="Professional stylist reviewing fashion items - BrandNest fashion search"
+                                    loading="lazy"
+                                    width="500"
+                                    height="750">
+                            </picture>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <div class="search-section">
             <div class="container">
                 <div class="search-container">
@@ -36,6 +126,13 @@
                         <button id="search-clear" class="search-clear" style="display: none;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button id="search-button" class="search-button" aria-label="Search products">
+                            <span class="search-button-text">Search</span>
+                            <svg class="search-button-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                         </button>
                     </div>
@@ -122,6 +219,7 @@
 
         <section class="products-section">
             <div class="container">
+                <div id="results-count" class="results-count">Showing products</div>
                 <div class="products-grid" id="products-grid">
                     <!-- Product cards will be populated by JS -->
                 </div>
@@ -130,8 +228,10 @@
                     <button id="load-more-btn" class="load-more-btn" style="display: none;">
                         Load More Products
                     </button>
-                    <div id="loading-indicator" class="loading">
-                        Loading products...
+                    <div id="loading-indicator" class="loading-circle-container">
+                        <div class="loading-circle">
+                            <div class="loading-circle-spinner"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -143,6 +243,54 @@
             <span>Filters</span>
             <span class="filter-count" id="active-filters-count"></span>
         </button>
+    </div>
+
+    <!-- AI Search Loader Overlay -->
+    <div id="ai-search-loader" class="ai-search-loader" role="status" aria-live="polite" aria-label="AI search in progress">
+        <div class="ai-loader-backdrop"></div>
+        <div class="ai-loader-content">
+            <div class="ai-loader-card">
+                <!-- Neural Network Animation -->
+                <div class="neural-network-animation" aria-hidden="true">
+                    <svg viewBox="0 0 200 200" class="neural-svg">
+                        <!-- Central node -->
+                        <circle class="neural-node neural-node-center" cx="100" cy="100" r="8"/>
+
+                        <!-- Ring 1 nodes -->
+                        <circle class="neural-node neural-node-1" cx="100" cy="60" r="6"/>
+                        <circle class="neural-node neural-node-2" cx="130" cy="75" r="6"/>
+                        <circle class="neural-node neural-node-3" cx="140" cy="100" r="6"/>
+                        <circle class="neural-node neural-node-4" cx="130" cy="125" r="6"/>
+                        <circle class="neural-node neural-node-5" cx="100" cy="140" r="6"/>
+                        <circle class="neural-node neural-node-6" cx="70" cy="125" r="6"/>
+                        <circle class="neural-node neural-node-7" cx="60" cy="100" r="6"/>
+                        <circle class="neural-node neural-node-8" cx="70" cy="75" r="6"/>
+
+                        <!-- Connection lines -->
+                        <g class="neural-connections" stroke-width="1.5" fill="none" opacity="0.3">
+                            <line class="neural-line" x1="100" y1="100" x2="100" y2="60"/>
+                            <line class="neural-line" x1="100" y1="100" x2="130" y2="75"/>
+                            <line class="neural-line" x1="100" y1="100" x2="140" y2="100"/>
+                            <line class="neural-line" x1="100" y1="100" x2="130" y2="125"/>
+                            <line class="neural-line" x1="100" y1="100" x2="100" y2="140"/>
+                            <line class="neural-line" x1="100" y1="100" x2="70" y2="125"/>
+                            <line class="neural-line" x1="100" y1="100" x2="60" y2="100"/>
+                            <line class="neural-line" x1="100" y1="100" x2="70" y2="75"/>
+                        </g>
+                    </svg>
+
+                    <!-- Rotating outer ring -->
+                    <div class="neural-ring"></div>
+                </div>
+
+                <!-- Loading Text -->
+                <h3 class="ai-loader-title">AI Search in Progress</h3>
+                <p class="ai-loader-message" id="ai-loader-message">Analyzing 12,000+ fashion items...</p>
+
+                <!-- Progress hint -->
+                <div class="ai-loader-hint">This typically takes 4-5 seconds</div>
+            </div>
+        </div>
     </div>
 
     <!-- Analytics Configuration -->

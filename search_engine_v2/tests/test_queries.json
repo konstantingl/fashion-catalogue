@@ -1,0 +1,158 @@
+[
+  {
+    "name": "TYPE_1: Long black trench with belt",
+    "query": "long black trench with belt",
+    "expected_type": "TYPE_1",
+    "expected_categories": ["trench_coats_parkas", "coats"],
+    "must_have_attributes": {
+      "length": "LONG",
+      "color": "BLACK",
+      "belt": "YES"
+    },
+    "precision_target": 0.95
+  },
+  {
+    "name": "TYPE_1: Midi dress",
+    "query": "midi dress",
+    "expected_type": "TYPE_1",
+    "expected_categories": ["dresses"],
+    "must_have_attributes": {
+      "length": "MIDI"
+    },
+    "precision_target": 0.95
+  },
+  {
+    "name": "TYPE_1: Schwarzer Rollkragenpullover (German)",
+    "query": "schwarzer Rollkragenpullover",
+    "expected_type": "TYPE_1",
+    "expected_language": "de",
+    "expected_categories": ["sweaters_pullovers"],
+    "must_have_attributes": {
+      "color": "BLACK",
+      "neckline": "TURTLENECK"
+    },
+    "precision_target": 0.95
+  },
+  {
+    "name": "TYPE_1: Oversized blazer",
+    "query": "oversized blazer",
+    "expected_type": "TYPE_1",
+    "expected_categories": ["blazers"],
+    "must_have_attributes": {
+      "fit": "OVERSIZED"
+    },
+    "precision_target": 0.90
+  },
+  {
+    "name": "TYPE_1: Blue jeans",
+    "query": "blue jeans",
+    "expected_type": "TYPE_1",
+    "expected_categories": ["jeans", "pants"],
+    "must_have_attributes": {
+      "color": "BLUE"
+    },
+    "precision_target": 0.85
+  },
+  {
+    "name": "TYPE_2: Cozy winter sweater",
+    "query": "cozy winter sweater",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["sweaters_pullovers"],
+    "expected_style_keywords": ["cozy", "warm", "comfortable", "winter"],
+    "precision_target": 0.85
+  },
+  {
+    "name": "TYPE_2: Elegant office dress",
+    "query": "elegant office dress",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["dresses"],
+    "expected_style_keywords": ["elegant", "professional", "office"],
+    "precision_target": 0.85
+  },
+  {
+    "name": "TYPE_2: Crochet",
+    "query": "crochet",
+    "expected_type": "TYPE_2",
+    "expected_categories": [],
+    "expected_style_keywords": ["crochet", "knit", "texture"],
+    "precision_target": 0.80
+  },
+  {
+    "name": "TYPE_2: Boho summer dress",
+    "query": "boho summer dress",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["dresses"],
+    "expected_style_keywords": ["boho", "bohemian", "summer"],
+    "precision_target": 0.80
+  },
+  {
+    "name": "TYPE_2: Statement coat for winter",
+    "query": "statement coat for winter",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["coats"],
+    "expected_style_keywords": ["statement", "winter", "bold"],
+    "precision_target": 0.75
+  },
+  {
+    "name": "COMPLEX: Elegant long black dress for evening",
+    "query": "elegant long black dress for evening",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["dresses"],
+    "must_have_attributes": {
+      "color": "BLACK",
+      "length": "MAXI"
+    },
+    "expected_style_keywords": ["elegant", "evening"],
+    "precision_target": 0.85,
+    "complexity_expected": 0.7
+  },
+  {
+    "name": "BRAND: H&M sweater",
+    "query": "H&M sweater",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["sweaters_pullovers"],
+    "expected_brand": "H&M",
+    "precision_target": 0.90
+  },
+  {
+    "name": "PRICE: Dress under 50 euros",
+    "query": "dress under 50 euros",
+    "expected_type": "TYPE_2",
+    "expected_categories": ["dresses"],
+    "price_filter": { "max": 50 },
+    "precision_target": 0.80
+  },
+  {
+    "name": "GERMAN: Gemütlicher oversized Pullover für den Winter",
+    "query": "gemütlicher oversized pullover für den winter",
+    "expected_type": "TYPE_2",
+    "expected_language": "de",
+    "expected_categories": ["sweaters_pullovers"],
+    "must_have_attributes": {
+      "fit": "OVERSIZED"
+    },
+    "expected_style_keywords": ["gemütlich", "winter"],
+    "precision_target": 0.85,
+    "complexity_expected": 0.5
+  },
+  {
+    "name": "EDGE CASE: Single word - Red",
+    "query": "red",
+    "expected_type": "TYPE_1",
+    "must_have_attributes": {
+      "color": "RED"
+    },
+    "precision_target": 0.70
+  },
+  {
+    "name": "EDGE CASE: Very specific - Beige trench with double breasted closure",
+    "query": "beige trench with double breasted closure",
+    "expected_type": "TYPE_1",
+    "expected_categories": ["trench_coats_parkas", "coats"],
+    "must_have_attributes": {
+      "color": "BEIGE",
+      "closure": "DOUBLE_BREASTED"
+    },
+    "precision_target": 0.90
+  }
+]

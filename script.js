@@ -16,12 +16,6 @@ class FashionCatalogue {
         this.categoryAttributes = {};
         this.isLoading = false;
         this.activeDropdown = null;
-        this.searchTimeout = null;
-        this.searchIndex = [];
-        this.stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should']);
-
-        // Analytics tracking
-        this.searchStartTime = null;
 
         this.init();
     }
@@ -89,194 +83,12 @@ class FashionCatalogue {
         this.availableBrands = Array.from(brands).sort();
         this.availableCategories = Array.from(categories).sort();
         this.categoryAttributes = categoryAttributeMap;
-        
-        // Build search index for better performance
-        this.buildSearchIndex();
-    }
-
-    // Advanced Search Engine Methods
-    normalizeText(text) {
-        if (!text) return '';
-        return text.toLowerCase()
-            .replace(/[^\w\s]/g, ' ')  // Replace punctuation with spaces
-            .replace(/[-_]/g, ' ')     // Convert hyphens/underscores to spaces
-            .replace(/\s+/g, ' ')      // Normalize multiple spaces
-            .trim();
     }
 
     // Convert text to sentence case (first letter capitalized, rest lowercase)
     toSentenceCase(text) {
         if (!text) return '';
         return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-    }
-
-    tokenize(text) {
-        if (!text) return [];
-        return this.normalizeText(text)
-            .split(' ')
-            .filter(token => token.length > 1)  // Remove single characters
-            .filter(token => !this.stopWords.has(token)); // Remove stop words
-    }
-
-    buildSearchIndex() {
-        this.searchIndex = this.allProducts.map((product, index) => ({
-            productIndex: index,
-            titleTokens: this.tokenize(product.original_data?.title),
-            descriptionTokens: this.tokenize(product.original_data?.description),
-            normalizedTitle: this.normalizeText(product.original_data?.title),
-            normalizedDescription: this.normalizeText(product.original_data?.description),
-            allTokens: [
-                ...this.tokenize(product.original_data?.title || ''),
-                ...this.tokenize(product.original_data?.description || '')
-            ]
-        }));
-        console.log(`Built search index for ${this.searchIndex.length} products`);
-    }
-
-    calculateRelevanceScore(searchTokens, productIndex) {
-        const product = this.searchIndex[productIndex];
-        let score = 0;
-        let matchedTerms = 0;
-
-        searchTokens.forEach(searchToken => {
-            let termScore = 0;
-            let termMatched = false;
-
-            // Exact title matches (highest weight)
-            if (product.titleTokens.includes(searchToken)) {
-                termScore += 3;
-                termMatched = true;
-            }
-
-            // Fuzzy title matches
-            product.titleTokens.forEach(titleToken => {
-                if (this.fuzzyMatch(searchToken, titleToken)) {
-                    termScore += 2;
-                    termMatched = true;
-                }
-            });
-
-            // Exact description matches
-            if (product.descriptionTokens.includes(searchToken)) {
-                termScore += 1;
-                termMatched = true;
-            }
-
-            // Fuzzy description matches
-            product.descriptionTokens.forEach(descToken => {
-                if (this.fuzzyMatch(searchToken, descToken)) {
-                    termScore += 0.5;
-                    termMatched = true;
-                }
-            });
-
-            // Phrase matching bonus
-            if (product.normalizedTitle.includes(searchToken)) {
-                termScore += 1;
-                termMatched = true;
-            }
-            if (product.normalizedDescription.includes(searchToken)) {
-                termScore += 0.5;
-                termMatched = true;
-            }
-
-            if (termMatched) {
-                matchedTerms++;
-                score += termScore;
-            }
-        });
-
-        // Coverage bonus: reward products that match more search terms
-        const coverageBonus = (matchedTerms / searchTokens.length) * 2;
-        score += coverageBonus;
-
-        return {
-            score: score,
-            matchedTerms: matchedTerms,
-            totalTerms: searchTokens.length,
-            coverage: matchedTerms / searchTokens.length
-        };
-    }
-
-    fuzzyMatch(term1, term2, threshold = 0.8) {
-        if (term1 === term2) return true;
-        if (term1.length < 3 || term2.length < 3) return false;
-        
-        // Simple fuzzy matching: check if one term contains the other (partial matching)
-        if (term1.includes(term2) || term2.includes(term1)) return true;
-        
-        // Levenshtein distance for typo tolerance
-        const distance = this.levenshteinDistance(term1, term2);
-        const maxLength = Math.max(term1.length, term2.length);
-        const similarity = 1 - (distance / maxLength);
-        
-        return similarity >= threshold;
-    }
-
-    levenshteinDistance(str1, str2) {
-        const matrix = [];
-
-        for (let i = 0; i <= str2.length; i++) {
-            matrix[i] = [i];
-        }
-
-        for (let j = 0; j <= str1.length; j++) {
-            matrix[0][j] = j;
-        }
-
-        for (let i = 1; i <= str2.length; i++) {
-            for (let j = 1; j <= str1.length; j++) {
-                if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1, // substitution
-                        matrix[i][j - 1] + 1,     // insertion
-                        matrix[i - 1][j] + 1      // deletion
-                    );
-                }
-            }
-        }
-
-        return matrix[str2.length][str1.length];
-    }
-
-    performAdvancedSearch(query) {
-        if (!query || query.trim().length === 0) {
-            return this.allProducts.map((_, index) => ({ product: this.allProducts[index], score: 0 }));
-        }
-
-        const searchTokens = this.tokenize(query);
-        if (searchTokens.length === 0) {
-            return this.allProducts.map((_, index) => ({ product: this.allProducts[index], score: 0 }));
-        }
-
-        // Calculate relevance scores for all products
-        const results = [];
-        this.searchIndex.forEach((indexedProduct, searchIndex) => {
-            const relevance = this.calculateRelevanceScore(searchTokens, searchIndex);
-            
-            // Only include products with some relevance (at least one matching term)
-            if (relevance.matchedTerms > 0) {
-                results.push({
-                    product: this.allProducts[indexedProduct.productIndex],
-                    score: relevance.score,
-                    matchedTerms: relevance.matchedTerms,
-                    coverage: relevance.coverage
-                });
-            }
-        });
-
-        // Sort by relevance score (highest first)
-        results.sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            // If scores are equal, prefer higher coverage
-            if (b.coverage !== a.coverage) return b.coverage - a.coverage;
-            // Finally, maintain confidence-based sorting
-            return (b.product.confidence_score || 0) - (a.product.confidence_score || 0);
-        });
-
-        return results;
     }
 
     setupEventListeners() {
@@ -331,6 +143,47 @@ class FashionCatalogue {
             this.filterCategoryOptions(e.target.value);
         });
 
+        // Search input - AI-powered semantic search (only on Enter key or button click)
+        const searchInput = document.getElementById('search-input');
+        const searchClear = document.getElementById('search-clear');
+        const searchButton = document.getElementById('search-button');
+
+        // Show/hide clear button based on input
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            searchClear.style.display = query ? 'flex' : 'none';
+        });
+
+        // Handle Enter key to search
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = e.target.value.trim();
+                if (query) {
+                    console.log('Search triggered by Enter key:', query);
+                    this.performSemanticSearch(query);
+                }
+            }
+        });
+
+        // Handle search button click
+        if (searchButton) {
+            searchButton.addEventListener('click', () => {
+                const query = searchInput.value.trim();
+                if (query) {
+                    console.log('Search triggered by button click:', query);
+                    this.performSemanticSearch(query);
+                }
+            });
+        }
+
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            this.filters.searchQuery = '';
+            this.applyFilters();
+        });
+
         // Clear all filters
         document.getElementById('clear-all-filters').addEventListener('click', () => {
             this.clearAllFilters();
@@ -339,16 +192,6 @@ class FashionCatalogue {
         // Load more button
         document.getElementById('load-more-btn').addEventListener('click', () => {
             this.loadMoreProducts();
-        });
-
-        // Search functionality
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
-
-        // Search clear button
-        document.getElementById('search-clear').addEventListener('click', () => {
-            this.clearSearch();
         });
 
         // Close dropdown when clicking outside
@@ -363,21 +206,6 @@ class FashionCatalogue {
             });
         });
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + F to focus search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                e.preventDefault();
-                document.getElementById('search-input').focus();
-            }
-            
-            // Escape to clear search when search input is focused
-            if (e.key === 'Escape' && document.activeElement === document.getElementById('search-input')) {
-                if (this.filters.searchQuery) {
-                    this.clearSearch();
-                }
-            }
-        });
     }
 
     toggleDropdown(type) {
@@ -733,110 +561,6 @@ class FashionCatalogue {
         });
     }
 
-    handleSearch(query) {
-        // Clear existing timeout
-        if (this.searchTimeout) {
-            clearTimeout(this.searchTimeout);
-        }
-
-        // Show/hide clear button
-        const clearButton = document.getElementById('search-clear');
-        if (query.length > 0) {
-            clearButton.style.display = 'block';
-            this.searchStartTime = new Date();
-        } else {
-            clearButton.style.display = 'none';
-            this.searchStartTime = null;
-        }
-
-        // Debounce search - wait 300ms after user stops typing
-        this.searchTimeout = setTimeout(() => {
-            this.filters.searchQuery = query.toLowerCase().trim();
-            this.applyFilters();
-            this.updateSearchResultsInfo();
-
-            // Track search event
-            if (window.analytics && query.trim().length > 0) {
-                const duration = this.searchStartTime ? new Date() - this.searchStartTime : null;
-                window.analytics.trackSearch(
-                    query.trim(),
-                    this.filteredProducts.length,
-                    duration,
-                    false
-                );
-            }
-        }, 300);
-    }
-
-    clearSearch() {
-        const searchInput = document.getElementById('search-input');
-        const clearButton = document.getElementById('search-clear');
-
-        const previousQuery = this.filters.searchQuery;
-
-        searchInput.value = '';
-        clearButton.style.display = 'none';
-        this.filters.searchQuery = '';
-
-        this.applyFilters();
-        this.updateSearchResultsInfo();
-
-        // Track search clear event
-        if (window.analytics && previousQuery) {
-            window.analytics.trackSearch(previousQuery, 0, null, true);
-        }
-    }
-
-    updateSearchResultsInfo() {
-        const searchResultsInfo = document.getElementById('search-results-info');
-        
-        if (this.filters.searchQuery && this.filters.searchQuery.trim().length > 0) {
-            const resultCount = this.filteredProducts.length;
-            const searchTokens = this.tokenize(this.filters.searchQuery);
-            
-            let infoText = `${resultCount} results for "${this.filters.searchQuery}"`;
-            
-            if (searchTokens.length > 1) {
-                infoText += ` (searching: ${searchTokens.join(', ')})`;
-            }
-            
-            if (resultCount === 0) {
-                const suggestions = this.generateSearchSuggestions(this.filters.searchQuery);
-                if (suggestions.length > 0) {
-                    infoText += `. Did you mean: ${suggestions.slice(0, 3).join(', ')}?`;
-                }
-            }
-            
-            searchResultsInfo.textContent = infoText;
-        } else {
-            searchResultsInfo.textContent = '';
-        }
-    }
-
-    generateSearchSuggestions(query) {
-        // Simple suggestion system - find similar terms in the product index
-        const suggestions = new Set();
-        const normalizedQuery = this.normalizeText(query);
-        const queryTokens = this.tokenize(query);
-        
-        // Look for similar tokens in our search index
-        this.searchIndex.forEach(product => {
-            product.allTokens.forEach(token => {
-                queryTokens.forEach(queryToken => {
-                    // Suggest tokens that are similar but not identical
-                    if (token !== queryToken && this.fuzzyMatch(queryToken, token, 0.7)) {
-                        suggestions.add(token);
-                    }
-                    // Also suggest tokens that contain the query token
-                    if (token.length > queryToken.length && token.includes(queryToken)) {
-                        suggestions.add(token);
-                    }
-                });
-            });
-        });
-
-        return Array.from(suggestions).slice(0, 5);
-    }
 
     updateFilterButtons() {
         // Update brand button text
@@ -890,21 +614,11 @@ class FashionCatalogue {
         });
     }
 
-    applyFilters() {
-        // Start with search results if there's a search query
-        let productsToFilter;
-        
-        if (this.filters.searchQuery && this.filters.searchQuery.trim().length > 0) {
-            // Use advanced search to get relevance-ranked results
-            const searchResults = this.performAdvancedSearch(this.filters.searchQuery);
-            productsToFilter = searchResults.map(result => result.product);
-            console.log(`Advanced search for "${this.filters.searchQuery}" found ${productsToFilter.length} results`);
-        } else {
-            // No search query, start with all products (sorted by confidence)
-            productsToFilter = [...this.allProducts];
-        }
+    async applyFilters() {
+        // Start with all products (sorted by confidence)
+        let productsToFilter = [...this.allProducts];
 
-        // Apply other filters to the search results
+        // Apply filters to products
         this.filteredProducts = productsToFilter.filter(item => {
             // Brand filter
             if (this.filters.brands.size > 0) {
@@ -945,17 +659,295 @@ class FashionCatalogue {
         // Reset pagination
         this.currentPage = 0;
         this.displayedProducts = [];
-        
+
         // Load first page
         this.loadMoreProducts();
         this.updateResultsCount();
+    }
+
+    async performSemanticSearch(query) {
+        console.log('performSemanticSearch called with query:', query);
+
+        // Store the search query
+        this.filters.searchQuery = query;
+
+        // Show AI loader overlay
+        const aiLoader = document.getElementById('ai-search-loader');
+        const aiLoaderMessage = document.getElementById('ai-loader-message');
+        const resultsCount = document.getElementById('results-count');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const productsGrid = document.getElementById('products-grid');
+
+        // Define rotating messages
+        const messages = [
+            'Understanding your query with AI...',
+            'Searching 10,000+ fashion items...',
+            'Running hybrid retrieval...',
+            'Analyzing attributes and style...',
+            'Ranking by relevance...',
+            'Finding your perfect match...'
+        ];
+
+        let messageIndex = 0;
+        let messageInterval = null;
+
+        // Show the AI loader
+        aiLoader.classList.add('active');
+        aiLoaderMessage.textContent = messages[0];
+
+        // Rotate messages every 1.5 seconds
+        messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            aiLoaderMessage.textContent = messages[messageIndex];
+        }, 1500);
+
+        // Also update old loading indicator for backwards compatibility
+        resultsCount.textContent = 'Searching with AI...';
+        loadingIndicator.classList.add('show');
+        productsGrid.innerHTML = '';
+
+        try {
+            console.log('Calling search API v2...');
+
+            // Determine API endpoint based on environment
+            const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:3000/api/search'  // Local development
+                : '/api/search';  // Production (Vercel)
+
+            // Call the new search engine API
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    limit: 50
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Search API v2 response:', data);
+            console.log('Found', data.results.length, 'results');
+
+            // Split results by relevance score
+            const RELEVANCE_THRESHOLD = 0.36;
+            const MIN_PRIMARY_RESULTS = 8;
+
+            const primaryResults = [];
+            const secondaryResults = [];
+
+            data.results.forEach(result => {
+                const score = result.relevance_score || 0;
+                if (score >= RELEVANCE_THRESHOLD) {
+                    primaryResults.push(result);
+                } else {
+                    secondaryResults.push(result);
+                }
+            });
+
+            console.log(`Split results: ${primaryResults.length} primary (>= ${RELEVANCE_THRESHOLD}), ${secondaryResults.length} secondary`);
+
+            // Decide whether to show split view
+            const shouldSplit = primaryResults.length >= MIN_PRIMARY_RESULTS &&
+                               secondaryResults.length > 0;
+
+            if (shouldSplit) {
+                console.log('Rendering split view');
+                this.renderSplitResults(primaryResults, secondaryResults);
+            } else {
+                console.log('Rendering unified view');
+                this.renderUnifiedResults(data.results);
+            }
+
+            // Show query understanding to user
+            if (data.query_understanding) {
+                console.log('Query understood as:', data.query_understanding.interpreted_as);
+                console.log('Query type:', data.query_understanding.query_type);
+                console.log('Language:', data.query_understanding.language);
+            }
+
+            // Track search event
+            if (window.analytics) {
+                window.analytics.trackEvent('search', 'ai_search_v2', {
+                    metadata: {
+                        query: query,
+                        results_count: this.filteredProducts.length,
+                        execution_time: data.search_time_ms,
+                        query_type: data.query_understanding?.query_type,
+                        language: data.query_understanding?.language
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error('Search API error:', error);
+
+            // Fallback to client-side filtering on error
+            resultsCount.textContent = 'AI search unavailable, using basic filter...';
+
+            // Simple text search fallback
+            this.filteredProducts = this.allProducts.filter(item => {
+                const searchLower = query.toLowerCase();
+                const title = item.original_data?.title?.toLowerCase() || '';
+                const description = item.original_data?.description?.toLowerCase() || '';
+                const brand = item.original_data?.brand?.toLowerCase() || '';
+                const category = item.enriched_category?.toLowerCase() || '';
+
+                return title.includes(searchLower) ||
+                       description.includes(searchLower) ||
+                       brand.includes(searchLower) ||
+                       category.includes(searchLower);
+            });
+
+            this.currentPage = 0;
+            this.displayedProducts = [];
+            this.loadMoreProducts();
+            this.updateResultsCount();
+        } finally {
+            // Clear message rotation interval
+            if (messageInterval) {
+                clearInterval(messageInterval);
+            }
+
+            // Hide AI loader overlay
+            aiLoader.classList.remove('active');
+
+            // Hide old loading indicator
+            loadingIndicator.classList.remove('show');
+        }
+    }
+
+    renderSplitResults(primaryResults, secondaryResults) {
+        // Create split structure if it doesn't exist
+        this.ensureSplitStructure();
+
+        const primaryGrid = document.getElementById('primary-products-grid');
+        const secondaryGrid = document.getElementById('secondary-products-grid');
+        const divider = document.getElementById('results-divider');
+        const secondarySection = document.getElementById('secondary-results');
+
+        // Clear previous results
+        primaryGrid.innerHTML = '';
+        secondaryGrid.innerHTML = '';
+
+        // Map results to full product objects
+        const primaryProducts = primaryResults
+            .map(result => this.findProductByUrl(result.id))
+            .filter(p => p !== undefined);
+
+        const secondaryProducts = secondaryResults
+            .map(result => this.findProductByUrl(result.id))
+            .filter(p => p !== undefined);
+
+        // Render primary results
+        primaryProducts.forEach(product => {
+            const card = this.createProductCard(product);
+            primaryGrid.appendChild(card);
+        });
+
+        // Render secondary results
+        secondaryProducts.forEach(product => {
+            const card = this.createProductCard(product);
+            secondaryGrid.appendChild(card);
+        });
+
+        // Show divider and secondary section
+        divider.style.display = 'block';
+        secondarySection.style.display = 'block';
+
+        // Store for pagination/filters
+        this.filteredProducts = [...primaryProducts, ...secondaryProducts];
+        this.displayedProducts = this.filteredProducts;
+
+        // Update results count
+        document.getElementById('results-count').textContent =
+            `Showing ${this.filteredProducts.length} products (${primaryProducts.length} top matches)`;
+    }
+
+    renderUnifiedResults(results) {
+        // Ensure normal structure (hide split elements)
+        this.ensureNormalStructure();
+
+        // Map results to full product objects
+        this.filteredProducts = results
+            .map(result => this.findProductByUrl(result.id))
+            .filter(p => p !== undefined);
+
+        // Reset pagination and display
+        this.currentPage = 0;
+        this.displayedProducts = [];
+        this.loadMoreProducts();
+        this.updateResultsCount();
+    }
+
+    findProductByUrl(url) {
+        return this.allProducts.find(p => p.original_data?.item_page_url === url);
+    }
+
+    ensureSplitStructure() {
+        const productsGrid = document.getElementById('products-grid');
+
+        // Check if split structure already exists
+        if (!document.getElementById('primary-products-grid')) {
+            // Create split structure
+            const container = document.createElement('div');
+            container.id = 'products-container';
+            container.innerHTML = `
+                <div id="primary-results" class="primary-results-section">
+                    <div class="products-grid" id="primary-products-grid"></div>
+                </div>
+
+                <div id="results-divider" class="results-divider" style="display: none;">
+                    <div class="container">
+                        <div class="results-divider-content">
+                            <h3 class="results-divider-title">More Styles to Consider</h3>
+                            <p class="results-divider-subtitle">These pieces share similar attributes and may inspire your curation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="secondary-results" class="secondary-results-section" style="display: none;">
+                    <div class="container">
+                        <div class="products-grid" id="secondary-products-grid"></div>
+                    </div>
+                </div>
+            `;
+
+            // Replace products-grid with new structure
+            productsGrid.parentNode.replaceChild(container, productsGrid);
+        }
+    }
+
+    ensureNormalStructure() {
+        const divider = document.getElementById('results-divider');
+        const secondarySection = document.getElementById('secondary-results');
+
+        if (divider) divider.style.display = 'none';
+        if (secondarySection) secondarySection.style.display = 'none';
+
+        // Make sure primary grid exists and is used as the main grid
+        const primaryGrid = document.getElementById('primary-products-grid');
+        if (primaryGrid) {
+            // Use primary grid as the main products grid
+            const productsGrid = primaryGrid;
+        }
     }
 
     loadMoreProducts() {
         if (this.isLoading) return;
 
         this.isLoading = true;
-        document.getElementById('loading-indicator').style.display = 'block';
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        // Hide button and show elegant loading circle
+        loadMoreBtn.style.display = 'none';
+        loadingIndicator.classList.add('show');
 
         // Track load more event
         if (window.analytics && this.currentPage > 0) {
@@ -985,8 +977,12 @@ class FashionCatalogue {
             this.currentPage++;
 
             const hasMoreProducts = endIndex < this.filteredProducts.length;
-            document.getElementById('load-more-btn').style.display = hasMoreProducts ? 'block' : 'none';
-            document.getElementById('loading-indicator').style.display = 'none';
+
+            // Hide loading circle
+            loadingIndicator.classList.remove('show');
+
+            // Show button again if there are more products
+            loadMoreBtn.style.display = hasMoreProducts ? 'block' : 'none';
 
             this.isLoading = false;
         }, 300);
@@ -1007,6 +1003,7 @@ class FashionCatalogue {
         });
 
         this.initializeImageSliders();
+        this.initializeDesktopImageNavigation();
         this.initializeFavoriteButtons();
 
         // Update favorite button states after products are rendered
@@ -1050,6 +1047,19 @@ class FashionCatalogue {
                     `).join('')}
                 </div>
                 ${validImages.length > 1 ? `
+                    <button class="image-nav-arrow image-nav-prev" aria-label="Previous image" data-direction="prev">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button class="image-nav-arrow image-nav-next" aria-label="Next image" data-direction="next">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="image-counter">
+                        <span class="current-image">1</span> / <span class="total-images">${validImages.length}</span>
+                    </div>
                     <div class="image-controls">
                         ${validImages.map((_, index) => `
                             <div class="image-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>
@@ -1126,22 +1136,115 @@ class FashionCatalogue {
         const imagesContainer = container.querySelector('.product-images');
         const dots = container.querySelectorAll('.image-dot');
         const totalImages = container.querySelectorAll('.product-image').length;
-        
+
         // Clamp index to valid range
         index = Math.max(0, Math.min(index, totalImages - 1));
-        
+
         // Update transform to show the selected image
         const translateX = -index * 100;
         imagesContainer.style.transform = `translateX(${translateX}%)`;
         imagesContainer.dataset.current = index;
-        
+
         // Update dot indicators
         dots.forEach(d => d.classList.remove('active'));
         if (dots[index]) {
             dots[index].classList.add('active');
         }
+
+        // Update arrow states and counter (for desktop navigation)
+        this.updateArrowStatesForContainer(container);
+        this.updateImageCounter(container, index + 1, totalImages);
     }
-    
+
+    initializeDesktopImageNavigation() {
+        // Only initialize on desktop
+        if (window.innerWidth < 1025) return;
+
+        document.querySelectorAll('.image-nav-arrow').forEach(arrow => {
+            if (!arrow.hasAttribute('data-desktop-listener')) {
+                arrow.setAttribute('data-desktop-listener', 'true');
+                arrow.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent card click
+                    this.navigateImage(arrow);
+                });
+            }
+        });
+
+        // Update arrow states for all cards
+        this.updateArrowStates();
+    }
+
+    navigateImage(arrow) {
+        const direction = arrow.dataset.direction; // 'prev' or 'next'
+        const container = arrow.closest('.product-image-container');
+        const imagesContainer = container.querySelector('.product-images');
+        const currentIndex = parseInt(imagesContainer.dataset.current) || 0;
+        const totalImages = container.querySelectorAll('.product-image').length;
+
+        let newIndex = currentIndex;
+
+        if (direction === 'prev' && currentIndex > 0) {
+            newIndex = currentIndex - 1;
+        } else if (direction === 'next' && currentIndex < totalImages - 1) {
+            newIndex = currentIndex + 1;
+        }
+
+        if (newIndex !== currentIndex) {
+            // Track analytics
+            if (window.analytics) {
+                const productCard = container.closest('.product-card');
+                const productIndex = Array.from(document.querySelectorAll('.product-card')).indexOf(productCard);
+
+                if (productIndex >= 0 && this.displayedProducts[productIndex]) {
+                    window.analytics.trackProductInteraction(
+                        this.displayedProducts[productIndex],
+                        'image_navigation_desktop_arrow',
+                        {
+                            direction: direction,
+                            fromIndex: currentIndex,
+                            toIndex: newIndex,
+                            positionInList: productIndex
+                        }
+                    );
+                }
+            }
+
+            // Perform the switch
+            this.switchToImageIndex(container, newIndex);
+        }
+    }
+
+    updateArrowStatesForContainer(container) {
+        const imagesContainer = container.querySelector('.product-images');
+        const currentIndex = parseInt(imagesContainer.dataset.current) || 0;
+        const totalImages = container.querySelectorAll('.product-image').length;
+
+        const prevArrow = container.querySelector('.image-nav-prev');
+        const nextArrow = container.querySelector('.image-nav-next');
+
+        if (prevArrow) {
+            prevArrow.disabled = (currentIndex === 0);
+        }
+
+        if (nextArrow) {
+            nextArrow.disabled = (currentIndex === totalImages - 1);
+        }
+    }
+
+    updateArrowStates() {
+        document.querySelectorAll('.product-image-container').forEach(container => {
+            this.updateArrowStatesForContainer(container);
+        });
+    }
+
+    updateImageCounter(container, current, total) {
+        const counter = container.querySelector('.image-counter');
+        if (counter) {
+            counter.querySelector('.current-image').textContent = current;
+            counter.querySelector('.total-images').textContent = total;
+        }
+    }
+
     addTouchSupport(container) {
         let startX = 0;
         let startY = 0;
@@ -1316,7 +1419,6 @@ class FashionCatalogue {
         existingFilters.forEach(filter => filter.remove());
 
         this.updateFilterButtons();
-        this.updateSearchResultsInfo();
         this.applyFilters();
     }
 
@@ -1376,6 +1478,38 @@ class FashionCatalogue {
     }
 }
 
+// Initialize AI Loader Accessibility
+function initializeAILoader() {
+    const aiLoader = document.getElementById('ai-search-loader');
+    if (!aiLoader) return;
+
+    // Handle body scroll locking when loader is active
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                if (aiLoader.classList.contains('active')) {
+                    // Prevent body scroll when loader is active
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    // Restore body scroll when loader is hidden
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+    });
+
+    observer.observe(aiLoader, { attributes: true });
+
+    // Optional: Allow ESC key to be handled gracefully (though we don't cancel searches)
+    // This is just for accessibility - announce to screen readers
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && aiLoader.classList.contains('active')) {
+            // Don't actually cancel the search, but announce for accessibility
+            console.log('Search in progress - please wait for completion');
+        }
+    });
+}
+
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize analytics if configured
@@ -1417,6 +1551,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Failed to initialize favorites:', error);
         }
     }
+
+    // Initialize AI Loader
+    initializeAILoader();
 
     window.fashionCatalogue = new FashionCatalogue();
 });

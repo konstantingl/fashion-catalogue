@@ -402,6 +402,7 @@ class UserAnalytics {
         if (element.classList.contains('product-card')) return 'product_card';
         if (element.classList.contains('load-more-btn') || element.id === 'load-more-btn') return 'load_more_button';
         if (element.classList.contains('filter-button')) return 'filter_button';
+        if (element.classList.contains('search-button') || element.id === 'search-button') return 'search_button';
         if (element.classList.contains('search-clear') || element.id === 'search-clear') return 'search_clear';
         if (element.classList.contains('image-dot')) return 'image_dot';
         if (element.classList.contains('save-btn')) return 'filter_save_button';
