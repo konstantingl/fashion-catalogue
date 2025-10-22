@@ -874,10 +874,10 @@ class FashionCatalogue {
         return {
             original_data: {
                 item_page_url: apiResult.id,
-                item_name: apiResult.title,
-                brand_name: apiResult.brand,
-                item_price_EUR: apiResult.price_eur,
-                images_array: apiResult.images_url || []
+                title: apiResult.title,
+                brand: apiResult.brand,
+                price_eur: apiResult.price_eur,
+                images_url: apiResult.images_url || []
             },
             llm_description: apiResult.llm_description,
             enriched_category: apiResult.enriched_category,
