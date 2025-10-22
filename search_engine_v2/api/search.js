@@ -171,7 +171,7 @@ export async function OPTIONS() {
 
 // Export for Vercel - use Node.js runtime (not Edge) for fs/path support
 export const config = {
-  runtime: 'nodejs20.x',
+  runtime: 'nodejs',
 };
 
 export default handler;
