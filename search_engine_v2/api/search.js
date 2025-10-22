@@ -110,68 +110,46 @@ export async function search(userQuery, options = {}) {
 }
 
 /**
- * API handler for serverless deployment (Vercel Edge Function)
+ * Vercel Serverless Function handler (Node.js runtime)
  */
-export async function handler(request) {
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS preflight
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
+  // Only allow POST
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
   try {
     // Validate configuration on first request
     validateConfig();
 
-    // Parse request
-    const body = await request.json();
-    const { query, limit } = validateSearchRequest(body);
+    // Parse request body
+    const { query, limit } = validateSearchRequest(req.body);
 
     // Execute search
     const result = await search(query, { limit });
 
     // Return response
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
+    res.status(200).json(result);
 
   } catch (error) {
     console.error('API Error:', error);
 
-    return new Response(
-      JSON.stringify({
-        error: error.message || 'Internal server error',
-        query_understanding: null,
-        results: []
-      }),
-      {
-        status: error.message.includes('Query') ? 400 : 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
+    res.status(error.message.includes('Query') ? 400 : 500).json({
+      error: error.message || 'Internal server error',
+      query_understanding: null,
+      results: []
+    });
   }
 }
-
-/**
- * Handle OPTIONS request for CORS preflight
- */
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
-}
-
-// Export for Vercel - use Node.js runtime (not Edge) for fs/path support
-export const config = {
-  runtime: 'nodejs',
-};
-
-export default handler;

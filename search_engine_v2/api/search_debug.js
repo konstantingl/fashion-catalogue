@@ -211,64 +211,48 @@ export async function searchWithDebug(userQuery, options = {}) {
 }
 
 /**
- * Vercel serverless function handler
+ * Vercel Serverless Function handler (Node.js runtime)
  */
-export async function handler(request) {
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS preflight
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
+  // Only allow POST
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
   try {
-    // Parse request
-    const body = await request.json();
-    const { query, limit = 10 } = body;
+    // Parse request body
+    const { query, limit = 10 } = req.body;
 
     if (!query || typeof query !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Query is required and must be a string' }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        }
-      );
+      res.status(400).json({ error: 'Query is required and must be a string' });
+      return;
     }
 
     // Execute debug search
     const result = await searchWithDebug(query, { limit });
 
     // Return response
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
+    res.status(200).json(result);
 
   } catch (error) {
     console.error('Debug API Error:', error);
 
-    return new Response(
-      JSON.stringify({
-        error: error.message || 'Internal server error',
-        results: [],
-        debug: null
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
+    res.status(500).json({
+      error: error.message || 'Internal server error',
+      results: [],
+      debug: null
+    });
   }
 }
-
-// Export for Vercel - use Node.js runtime (not Edge) for fs/path support
-export const config = {
-  runtime: 'nodejs',
-};
-
-export default handler;
