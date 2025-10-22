@@ -29,9 +29,12 @@ class FashionCatalogue {
     }
 
     async init() {
+        // Initialize empty arrays for filters (will be populated after first search)
+        this.availableBrands = new Set();
+        this.availableCategories = new Set();
+
         // No longer loading products.json - all data comes from API
         this.setupEventListeners();
-        this.renderFilters();
 
         // Hide loading indicator and show search prompt
         document.getElementById('loading-indicator').classList.remove('show');
@@ -610,6 +613,13 @@ class FashionCatalogue {
     }
 
     async applyFilters() {
+        // If no products loaded yet (no search performed), skip filtering
+        if (!this.allProducts || this.allProducts.length === 0) {
+            this.filteredProducts = [];
+            this.updateResultsCount();
+            return;
+        }
+
         // Start with all products (sorted by confidence)
         let productsToFilter = [...this.allProducts];
 
@@ -780,27 +790,20 @@ class FashionCatalogue {
         } catch (error) {
             console.error('Search API error:', error);
 
-            // Fallback to client-side filtering on error
-            resultsCount.textContent = 'AI search unavailable, using basic filter...';
+            // Show error message to user
+            resultsCount.textContent = 'Search failed. Please try again.';
+            productsGrid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                    <p style="color: var(--bn-ink); font-size: 1.125rem; margin-bottom: 1rem;">
+                        Unable to connect to search service
+                    </p>
+                    <p style="color: var(--bn-muted); font-size: 0.875rem;">
+                        Error: ${error.message}
+                    </p>
+                </div>
+            `;
 
-            // Simple text search fallback
-            this.filteredProducts = this.allProducts.filter(item => {
-                const searchLower = query.toLowerCase();
-                const title = item.original_data?.title?.toLowerCase() || '';
-                const description = item.original_data?.description?.toLowerCase() || '';
-                const brand = item.original_data?.brand?.toLowerCase() || '';
-                const category = item.enriched_category?.toLowerCase() || '';
-
-                return title.includes(searchLower) ||
-                       description.includes(searchLower) ||
-                       brand.includes(searchLower) ||
-                       category.includes(searchLower);
-            });
-
-            this.currentPage = 0;
-            this.displayedProducts = [];
-            this.loadMoreProducts();
-            this.updateResultsCount();
+            this.filteredProducts = [];
         } finally {
             // Clear message rotation interval
             if (messageInterval) {
