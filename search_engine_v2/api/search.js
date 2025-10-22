@@ -169,9 +169,9 @@ export async function OPTIONS() {
   });
 }
 
-// Export for Vercel
+// Export for Vercel - use Node.js runtime (not Edge) for fs/path support
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs20.x',
 };
 
 export default handler;

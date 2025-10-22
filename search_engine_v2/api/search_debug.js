@@ -210,4 +210,65 @@ export async function searchWithDebug(userQuery, options = {}) {
   }
 }
 
-export default searchWithDebug;
+/**
+ * Vercel serverless function handler
+ */
+export async function handler(request) {
+  try {
+    // Parse request
+    const body = await request.json();
+    const { query, limit = 10 } = body;
+
+    if (!query || typeof query !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Query is required and must be a string' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        }
+      );
+    }
+
+    // Execute debug search
+    const result = await searchWithDebug(query, { limit });
+
+    // Return response
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    });
+
+  } catch (error) {
+    console.error('Debug API Error:', error);
+
+    return new Response(
+      JSON.stringify({
+        error: error.message || 'Internal server error',
+        results: [],
+        debug: null
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+    );
+  }
+}
+
+// Export for Vercel - use Node.js runtime (not Edge) for fs/path support
+export const config = {
+  runtime: 'nodejs20.x',
+};
+
+export default handler;

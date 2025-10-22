@@ -1,14 +1,22 @@
 {
   "version": 2,
   "name": "brandnest-search-api",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
+    },
+    "server.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/search",
-      "destination": "/server.js"
+      "destination": "/api/search.js"
     },
     {
       "source": "/api/search/debug",
-      "destination": "/server.js"
+      "destination": "/api/search_debug.js"
     }
   ],
   "headers": [
