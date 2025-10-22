@@ -29,33 +29,20 @@ class FashionCatalogue {
     }
 
     async init() {
-        await this.loadData();
+        // No longer loading products.json - all data comes from API
         this.setupEventListeners();
         this.renderFilters();
-        this.applyFilters();
+
+        // Hide loading indicator and show search prompt
+        document.getElementById('loading-indicator').classList.remove('show');
+        document.getElementById('results-count').textContent = 'Search for fashion items to get started';
 
         // Refresh favorites UI after initial load
         setTimeout(() => {
             if (window.favoritesManager) {
                 window.favoritesManager.refreshFavoritesUI();
             }
-        }, 1000); // Give some time for everything to initialize
-    }
-
-    async loadData() {
-        try {
-            const response = await fetch('data/products.json');
-            this.allProducts = await response.json();
-            
-            // Sort by confidence score (highest first) - hidden from user
-            this.allProducts.sort((a, b) => (b.confidence_score || 0) - (a.confidence_score || 0));
-            
-            this.preprocessData();
-            console.log(`Loaded ${this.allProducts.length} products`);
-        } catch (error) {
-            console.error('Error loading data:', error);
-            document.getElementById('loading-indicator').textContent = 'Error loading products. Please refresh the page.';
-        }
+        }, 1000);
     }
 
     preprocessData() {
@@ -841,14 +828,9 @@ class FashionCatalogue {
         primaryGrid.innerHTML = '';
         secondaryGrid.innerHTML = '';
 
-        // Map results to full product objects
-        const primaryProducts = primaryResults
-            .map(result => this.findProductByUrl(result.id))
-            .filter(p => p !== undefined);
-
-        const secondaryProducts = secondaryResults
-            .map(result => this.findProductByUrl(result.id))
-            .filter(p => p !== undefined);
+        // Convert API results to product format
+        const primaryProducts = primaryResults.map(result => this.convertApiResultToProduct(result));
+        const secondaryProducts = secondaryResults.map(result => this.convertApiResultToProduct(result));
 
         // Render primary results
         primaryProducts.forEach(product => {
@@ -879,10 +861,8 @@ class FashionCatalogue {
         // Ensure normal structure (hide split elements)
         this.ensureNormalStructure();
 
-        // Map results to full product objects
-        this.filteredProducts = results
-            .map(result => this.findProductByUrl(result.id))
-            .filter(p => p !== undefined);
+        // Convert API results to product format
+        this.filteredProducts = results.map(result => this.convertApiResultToProduct(result));
 
         // Reset pagination and display
         this.currentPage = 0;
@@ -891,8 +871,22 @@ class FashionCatalogue {
         this.updateResultsCount();
     }
 
-    findProductByUrl(url) {
-        return this.allProducts.find(p => p.original_data?.item_page_url === url);
+    convertApiResultToProduct(apiResult) {
+        // Convert API result format to the product format expected by createProductCard
+        return {
+            original_data: {
+                item_page_url: apiResult.id,
+                item_name: apiResult.title,
+                brand_name: apiResult.brand,
+                item_price_EUR: apiResult.price_eur,
+                images_array: apiResult.images_url || []
+            },
+            llm_description: apiResult.llm_description,
+            enriched_category: apiResult.enriched_category,
+            attributes: apiResult.attributes,
+            relevance_score: apiResult.relevance_score,
+            match_explanation: apiResult.match_explanation
+        };
     }
 
     ensureSplitStructure() {
