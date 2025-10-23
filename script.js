@@ -24,16 +24,33 @@ class FashionCatalogue {
     }
 
     async init() {
-        // Initialize empty arrays for filters (will be populated after first search)
+        // Initialize empty arrays for filters
         this.availableBrands = new Set();
         this.availableCategories = new Set();
 
-        // No longer loading products.json - all data comes from API
+        // Setup event listeners first
         this.setupEventListeners();
 
-        // Hide loading indicator and show search prompt
-        document.getElementById('loading-indicator').classList.remove('show');
-        document.getElementById('results-count').textContent = 'Search for fashion items to get started';
+        // Show loading indicator
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resultsCount = document.getElementById('results-count');
+        loadingIndicator.classList.add('show');
+        resultsCount.textContent = 'Loading products...';
+
+        try {
+            // Load filters and featured products in parallel
+            await Promise.all([
+                this.loadFilters(),
+                this.loadFeaturedProducts()
+            ]);
+
+            console.log('Initial load complete');
+        } catch (error) {
+            console.error('Error during initial load:', error);
+            resultsCount.textContent = 'Error loading products. Please try searching.';
+        } finally {
+            loadingIndicator.classList.remove('show');
+        }
 
         // Refresh favorites UI after initial load
         setTimeout(() => {
@@ -41,6 +58,59 @@ class FashionCatalogue {
                 window.favoritesManager.refreshFavoritesUI();
             }
         }, 1000);
+    }
+
+    async loadFilters() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/api/filters`);
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Store brands and categories
+            this.availableBrands = new Set(data.brands || []);
+            this.availableCategories = new Set(data.categories || []);
+
+            // Render filter dropdowns
+            this.renderFilters();
+
+            console.log(`Loaded ${this.availableBrands.size} brands and ${this.availableCategories.size} categories`);
+        } catch (error) {
+            console.error('Error loading filters:', error);
+            // Initialize with empty sets on error
+            this.availableBrands = new Set();
+            this.availableCategories = new Set();
+        }
+    }
+
+    async loadFeaturedProducts() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/api/products_featured?limit=30`);
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Convert API results to product format
+            this.allProducts = data.products.map(product => this.convertApiResultToProduct(product));
+            this.filteredProducts = [...this.allProducts];
+
+            // Display products
+            this.currentPage = 0;
+            this.displayedProducts = [];
+            this.loadMoreProducts();
+            this.updateResultsCount();
+
+            console.log(`Loaded ${this.allProducts.length} featured products`);
+        } catch (error) {
+            console.error('Error loading featured products:', error);
+            this.allProducts = [];
+            this.filteredProducts = [];
+            throw error;
+        }
     }
 
     preprocessData() {
