@@ -464,19 +464,48 @@ class FavoritesManager {
 
         try {
             const favorites = await this.getFavorites();
-            const favoriteProductIds = favorites.map(fav => fav.product_id);
-
-            // Get product details from the main products array
-            if (window.fashionCatalogue && window.fashionCatalogue.allProducts) {
-                const favoriteProducts = window.fashionCatalogue.allProducts.filter(product => {
-                    const productId = product.id || product.original_data.item_page_url;
-                    return favoriteProductIds.includes(productId);
-                });
-
-                return favoriteProducts;
+            if (favorites.length === 0) {
+                return [];
             }
 
-            return [];
+            const favoriteProductIds = favorites.map(fav => fav.product_id);
+
+            // Fetch product details from the database using product IDs
+            const { data: products, error } = await this.supabase
+                .from('products')
+                .select('*')
+                .in('id', favoriteProductIds);
+
+            if (error) {
+                console.error('Error fetching favorite products from database:', error);
+                return [];
+            }
+
+            // Transform database products to match the expected format
+            const formattedProducts = (products || []).map(product => {
+                return {
+                    id: product.id,
+                    original_data: {
+                        item_page_url: product.id,
+                        title: product.title,
+                        brand: product.brand,
+                        price_eur: product.price_eur,
+                        images_url: product.images_url || []
+                    },
+                    llm_description: product.llm_description,
+                    enriched_category: product.enriched_category,
+                    attributes: product.attributes
+                };
+            });
+
+            // Sort by the order they were favorited (most recent first)
+            const sortedProducts = formattedProducts.sort((a, b) => {
+                const aIndex = favoriteProductIds.indexOf(a.id);
+                const bIndex = favoriteProductIds.indexOf(b.id);
+                return aIndex - bIndex;
+            });
+
+            return sortedProducts;
         } catch (error) {
             console.error('Error getting favorite products:', error);
             return [];

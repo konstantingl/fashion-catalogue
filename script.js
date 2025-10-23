@@ -678,61 +678,88 @@ class FashionCatalogue {
     }
 
     async applyFilters() {
-        // If no products loaded yet (no search performed), skip filtering
-        if (!this.allProducts || this.allProducts.length === 0) {
-            this.filteredProducts = [];
-            this.updateResultsCount();
+        // Check if any filters are active
+        const hasActiveFilters =
+            this.filters.brands.size > 0 ||
+            this.filters.categories.size > 0 ||
+            this.filters.priceMin !== null ||
+            this.filters.priceMax !== null ||
+            Object.keys(this.filters.attributes).length > 0;
+
+        // If no filters are active, load featured products
+        if (!hasActiveFilters) {
+            await this.loadFeaturedProducts();
             return;
         }
 
-        // Start with all products (sorted by confidence)
-        let productsToFilter = [...this.allProducts];
+        // Show loading state
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resultsCount = document.getElementById('results-count');
+        loadingIndicator.classList.add('show');
+        resultsCount.textContent = 'Filtering products...';
 
-        // Apply filters to products
-        this.filteredProducts = productsToFilter.filter(item => {
-            // Brand filter
-            if (this.filters.brands.size > 0) {
-                if (!this.filters.brands.has(item.original_data?.brand)) {
-                    return false;
-                }
-            }
+        try {
+            // Prepare filters for API
+            const apiFilters = {
+                brands: Array.from(this.filters.brands),
+                categories: Array.from(this.filters.categories),
+                priceMin: this.filters.priceMin,
+                priceMax: this.filters.priceMax,
+                attributes: {}
+            };
 
-            // Category filter
-            if (this.filters.categories.size > 0) {
-                if (!this.filters.categories.has(item.enriched_category)) {
-                    return false;
-                }
-            }
-
-            // Price filter
-            if (this.filters.priceMin !== null || this.filters.priceMax !== null) {
-                const price = item.original_data?.price_eur;
-                if (price) {
-                    if (this.filters.priceMin !== null && price < this.filters.priceMin) return false;
-                    if (this.filters.priceMax !== null && price > this.filters.priceMax) return false;
-                }
-            }
-
-            // Attribute filters
+            // Convert attribute Sets to arrays
             for (const [attr, values] of Object.entries(this.filters.attributes)) {
                 if (values.size > 0) {
-                    const itemValue = item.attributes?.[attr]?.value;
-                    if (!itemValue || !values.has(itemValue)) {
-                        return false;
-                    }
+                    apiFilters.attributes[attr] = Array.from(values);
                 }
             }
 
-            return true;
-        });
+            console.log('Applying filters via API:', apiFilters);
 
-        // Reset pagination
-        this.currentPage = 0;
-        this.displayedProducts = [];
+            // Call the filtered products API
+            const response = await fetch(`${CONFIG.API_BASE_URL}/api/products_filtered`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filters: apiFilters,
+                    limit: 100 // Get more results for better filtering
+                })
+            });
 
-        // Load first page
-        this.loadMoreProducts();
-        this.updateResultsCount();
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Convert API results to product format
+            this.allProducts = data.products.map(product => this.convertApiResultToProduct(product));
+            this.filteredProducts = [...this.allProducts];
+
+            // Update category attributes based on filtered products
+            this.preprocessData();
+
+            // Reset pagination
+            this.currentPage = 0;
+            this.displayedProducts = [];
+
+            // Load first page
+            this.loadMoreProducts();
+            this.updateResultsCount();
+
+            console.log(`Filtered to ${this.filteredProducts.length} products`);
+
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            resultsCount.textContent = 'Error filtering products. Please try again.';
+            this.filteredProducts = [];
+            this.updateResultsCount();
+        } finally {
+            loadingIndicator.classList.remove('show');
+        }
     }
 
     async performSemanticSearch(query) {

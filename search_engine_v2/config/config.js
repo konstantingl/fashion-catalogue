@@ -13,7 +13,7 @@ export const config = {
   supabase: {
     url: process.env.SUPABASE_URL,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveWZ6YnJhc3liaWxieHlycHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MjY3ODUsImV4cCI6MjA3NDMwMjc4NX0.HoS2ezSVx_6Qty-jaotmkFaGe-JqjlPlpQlog9XTJX0'
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cmZ6Z3h6ZGJrc2N3eGZpd252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NzA1NzIsImV4cCI6MjA3NjU0NjU3Mn0.hal3yP37hbz--yGiOuX-CR0E_mzpHAKnbJwkBNJMVJ8'
   },
 
   // OpenAI

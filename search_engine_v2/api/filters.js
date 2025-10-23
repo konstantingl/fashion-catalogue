@@ -7,31 +7,53 @@ export async function getFilters() {
   try {
     console.log('Fetching all brands and categories...');
 
-    // Use RPC to get distinct values (more efficient for large datasets)
-    // Get all products and extract unique values client-side since Supabase doesn't have DISTINCT easily
-    const { data: products, error } = await supabaseAdmin
-      .from('products')
-      .select('brand, enriched_category')
-      .not('brand', 'is', null)
-      .not('enriched_category', 'is', null)
-      .limit(10000); // Get a large sample
+    // Get all distinct brands and categories by fetching all products
+    // We'll paginate through the entire table to ensure we get all unique values
+    let allBrands = new Set();
+    let allCategories = new Set();
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error) {
-      throw new Error(`Error fetching products: ${error.message}`);
+    while (hasMore) {
+      const { data: products, error } = await supabaseAdmin
+        .from('products')
+        .select('brand, enriched_category')
+        .not('brand', 'is', null)
+        .not('enriched_category', 'is', null)
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        throw new Error(`Error fetching products: ${error.message}`);
+      }
+
+      if (!products || products.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      // Add to sets
+      products.forEach(item => {
+        if (item.brand) allBrands.add(item.brand);
+        if (item.enriched_category) allCategories.add(item.enriched_category);
+      });
+
+      console.log(`Page ${page + 1}: Found ${products.length} products, running totals: ${allBrands.size} brands, ${allCategories.size} categories`);
+
+      // If we got less than pageSize, we're done
+      if (products.length < pageSize) {
+        hasMore = false;
+      }
+
+      page++;
     }
 
-    if (!products || products.length === 0) {
-      return {
-        brands: [],
-        categories: []
-      };
-    }
+    // Convert sets to sorted arrays
+    const brands = Array.from(allBrands).sort();
+    const categories = Array.from(allCategories).sort();
 
-    // Extract unique values
-    const brands = [...new Set(products.map(item => item.brand).filter(Boolean))].sort();
-    const categories = [...new Set(products.map(item => item.enriched_category).filter(Boolean))].sort();
-
-    console.log(`Found ${brands.length} brands and ${categories.length} categories from ${products.length} products`);
+    console.log(`Final result: ${brands.length} unique brands and ${categories.length} unique categories`);
+    console.log('Brands:', brands);
 
     return {
       brands,

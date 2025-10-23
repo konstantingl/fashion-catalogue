@@ -7,8 +7,8 @@ const CONFIG = {
         ? 'http://localhost:3000'  // Local development
         : 'https://fashion-search-api.vercel.app',  // Production
 
-    SUPABASE_URL: 'https://coyfzbrasybilbxyrpyk.supabase.co', // e.g., 'https://your-project.supabase.co'
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveWZ6YnJhc3liaWxieHlycHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MjY3ODUsImV4cCI6MjA3NDMwMjc4NX0.HoS2ezSVx_6Qty-jaotmkFaGe-JqjlPlpQlog9XTJX0', // Your public anon key
+    SUPABASE_URL: 'https://ytrfzgxzdbkscwxfiwnv.supabase.co', // Backend Supabase project with products table
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cmZ6Z3h6ZGJrc2N3eGZpd252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NzA1NzIsImV4cCI6MjA3NjU0NjU3Mn0.hal3yP37hbz--yGiOuX-CR0E_mzpHAKnbJwkBNJMVJ8', // Backend project anon key
 
     // Google Gemini API settings
     GEMINI_API_KEY: 'AIzaSyA5M00GZ0jCe2ubWrzG98wUselvsakYwrI', // Get from https://aistudio.google.com/apikey
