@@ -34,14 +34,27 @@ class SimpleAnalytics {
      */
     async initialize() {
         try {
+            if (window.CONFIG?.DEBUG_MODE) {
+                console.log('[Analytics] Starting initialization...');
+            }
+
             // Generate device fingerprint
             this.deviceFingerprint = this.generateFingerprint();
+            if (window.CONFIG?.DEBUG_MODE) {
+                console.log('[Analytics] Fingerprint generated:', this.deviceFingerprint);
+            }
 
             // Get or create user
             await this.initializeUser();
+            if (window.CONFIG?.DEBUG_MODE) {
+                console.log('[Analytics] User initialized:', this.userId);
+            }
 
             // Start session
             await this.startSession();
+            if (window.CONFIG?.DEBUG_MODE) {
+                console.log('[Analytics] Session started:', this.sessionId);
+            }
 
             // Setup event handlers
             this.setupEventHandlers();
@@ -53,7 +66,7 @@ class SimpleAnalytics {
             this.startAutoFlush();
 
             if (window.CONFIG?.DEBUG_MODE) {
-                console.log('[Analytics] Initialized', {
+                console.log('[Analytics] Initialized successfully!', {
                     userId: this.userId,
                     sessionId: this.sessionId,
                     fingerprint: this.deviceFingerprint
@@ -61,6 +74,10 @@ class SimpleAnalytics {
             }
         } catch (error) {
             console.error('[Analytics] Initialization failed:', error);
+            console.error('[Analytics] Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
         }
     }
 
@@ -365,10 +382,27 @@ class SimpleAnalytics {
             options.body = JSON.stringify(data);
         }
 
+        if (window.CONFIG?.DEBUG_MODE) {
+            console.log('[Analytics] Request:', method, endpoint, data);
+        }
+
         const response = await fetch(url, options);
 
         if (!response.ok) {
-            throw new Error(`Supabase request failed: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('[Analytics] Request failed:', {
+                method,
+                endpoint,
+                status: response.status,
+                statusText: response.statusText,
+                error: errorText,
+                data: data
+            });
+            throw new Error(`Supabase request failed: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        if (window.CONFIG?.DEBUG_MODE) {
+            console.log('[Analytics] Request successful:', method, endpoint);
         }
 
         // Return response for non-insert operations

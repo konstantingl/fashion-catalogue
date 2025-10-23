@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Test</title>
+</head>
+<body>
+    <h1>Analytics Test Page</h1>
+    <button onclick="testSearch()">Test Search Tracking</button>
+    <button onclick="testFilter()">Test Filter Tracking</button>
+    <button onclick="checkQueue()">Check Event Queue</button>
+    <button onclick="flushNow()">Flush Events Now</button>
+    <div id="output" style="margin-top: 20px; font-family: monospace; white-space: pre;"></div>
+
+    <script src="config.js"></script>
+    <script src="analytics-simple.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+
+        function log(message) {
+            output.textContent += message + '\n';
+            console.log(message);
+        }
+
+        // Initialize analytics
+        log('Initializing analytics...');
+        window.analytics = initializeSimpleAnalytics(
+            window.CONFIG.SUPABASE_URL,
+            window.CONFIG.SUPABASE_ANON_KEY
+        );
+
+        setTimeout(() => {
+            log('Analytics initialized!');
+            log('User ID: ' + window.analytics.userId);
+            log('Session ID: ' + window.analytics.sessionId);
+            log('Fingerprint: ' + window.analytics.deviceFingerprint);
+        }, 1000);
+
+        function testSearch() {
+            log('\n--- Testing Search Tracking ---');
+            window.analytics.trackSearch('black dress', 42, 'ai_search');
+            log('Search tracked: "black dress" with 42 results');
+            log('Queue size: ' + window.analytics.eventQueue.length);
+        }
+
+        function testFilter() {
+            log('\n--- Testing Filter Tracking ---');
+            window.analytics.trackFilter('brand', ['Zara', 'H&M'], null, 'apply');
+            log('Filter tracked: brand = [Zara, H&M]');
+            log('Queue size: ' + window.analytics.eventQueue.length);
+        }
+
+        function checkQueue() {
+            log('\n--- Event Queue ---');
+            log('Queue size: ' + window.analytics.eventQueue.length);
+            log('Queue contents: ' + JSON.stringify(window.analytics.eventQueue, null, 2));
+        }
+
+        async function flushNow() {
+            log('\n--- Flushing Queue ---');
+            try {
+                await window.analytics.flushQueue();
+                log('Queue flushed successfully!');
+                log('Queue size now: ' + window.analytics.eventQueue.length);
+            } catch (error) {
+                log('ERROR flushing queue: ' + error.message);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
