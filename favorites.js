@@ -140,17 +140,6 @@ class FavoritesManager {
 
             // Update UI immediately
             this.updateFavoriteButtons();
-
-            // Track analytics
-            if (window.analytics) {
-                window.analytics.trackEvent('user_action', 'add_favorite', {
-                    productId: productId,
-                    metadata: {
-                        userId: userId,
-                        totalFavorites: this.userFavorites.size
-                    }
-                });
-            }
         } catch (error) {
             console.error('Error adding favorite:', error);
             throw new Error('Failed to add favorite. Please try again.');
@@ -179,17 +168,6 @@ class FavoritesManager {
 
             // Update UI immediately
             this.updateFavoriteButtons();
-
-            // Track analytics
-            if (window.analytics) {
-                window.analytics.trackEvent('user_action', 'remove_favorite', {
-                    productId: productId,
-                    metadata: {
-                        userId: userId,
-                        totalFavorites: this.userFavorites.size
-                    }
-                });
-            }
         } catch (error) {
             console.error('Error removing favorite:', error);
             throw new Error('Failed to remove favorite. Please try again.');

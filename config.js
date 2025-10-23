@@ -1,5 +1,5 @@
-// Configuration file for Fashion Aggregator Analytics
-// Replace these with your actual Supabase project credentials
+// Configuration file for Fashion Aggregator
+// Replace these with your actual credentials
 
 const CONFIG = {
     // Search API settings
@@ -20,14 +20,9 @@ const CONFIG = {
 
     // Analytics settings
     ANALYTICS_ENABLED: true,
-    BATCH_SIZE: 10,
-    FLUSH_INTERVAL: 5000, // 5 seconds
-    HEARTBEAT_INTERVAL: 30000, // 30 seconds
-
-    // Privacy settings
-    TRACK_USER_AGENT: true,
-    TRACK_SCREEN_RESOLUTION: true,
-    TRACK_CLICK_COORDINATES: true,
+    ANALYTICS_BATCH_SIZE: 5,
+    ANALYTICS_FLUSH_INTERVAL: 10000, // 10 seconds
+    ANALYTICS_HEARTBEAT_INTERVAL: 30000, // 30 seconds
 
     // Development mode (set to false in production)
     DEBUG_MODE: true
@@ -36,7 +31,6 @@ const CONFIG = {
 // Check if running in development
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     CONFIG.DEBUG_MODE = true;
-    console.log('Analytics running in debug mode');
 }
 
 // Export config

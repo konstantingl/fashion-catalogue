@@ -401,15 +401,9 @@ class FashionCatalogue {
         this.updateFilterButtons();
         this.applyFilters();
 
-        // Track filter event
-        if (window.analytics) {
-            window.analytics.trackFilter(
-                'brand',
-                'save',
-                'brands',
-                Array.from(this.filters.brands),
-                this.filteredProducts.length
-            );
+        // Track filter usage
+        if (window.analytics && this.filters.brands.size > 0) {
+            window.analytics.trackFilter('brand', Array.from(this.filters.brands), null, 'apply');
         }
     }
 
@@ -428,15 +422,9 @@ class FashionCatalogue {
         this.renderDynamicAttributeFilters();
         this.applyFilters();
 
-        // Track filter event
-        if (window.analytics) {
-            window.analytics.trackFilter(
-                'category',
-                'save',
-                'categories',
-                Array.from(this.filters.categories),
-                this.filteredProducts.length
-            );
+        // Track filter usage
+        if (window.analytics && this.filters.categories.size > 0) {
+            window.analytics.trackFilter('category', Array.from(this.filters.categories), null, 'apply');
         }
     }
 
@@ -451,15 +439,12 @@ class FashionCatalogue {
         this.updateFilterButtons();
         this.applyFilters();
 
-        // Track filter event
-        if (window.analytics) {
-            window.analytics.trackFilter(
-                'price',
-                'save',
-                'price_range',
-                { min: this.filters.priceMin, max: this.filters.priceMax },
-                this.filteredProducts.length
-            );
+        // Track filter usage
+        if (window.analytics && (this.filters.priceMin || this.filters.priceMax)) {
+            window.analytics.trackFilter('price', {
+                min: this.filters.priceMin,
+                max: this.filters.priceMax
+            }, null, 'apply');
         }
     }
 
@@ -616,6 +601,11 @@ class FashionCatalogue {
 
         this.updateFilterButtons();
         this.applyFilters();
+
+        // Track filter usage
+        if (window.analytics && this.filters.attributes[attribute] && this.filters.attributes[attribute].size > 0) {
+            window.analytics.trackFilter('attribute', Array.from(this.filters.attributes[attribute]), attribute, 'apply');
+        }
     }
 
     resetDynamicAttributeFilter(container, attribute) {
@@ -868,15 +858,7 @@ class FashionCatalogue {
 
             // Track search event
             if (window.analytics) {
-                window.analytics.trackEvent('search', 'ai_search_v2', {
-                    metadata: {
-                        query: query,
-                        results_count: this.filteredProducts.length,
-                        execution_time: data.search_time_ms,
-                        query_type: data.query_understanding?.query_type,
-                        language: data.query_understanding?.language
-                    }
-                });
+                window.analytics.trackSearch(query, data.results.length, 'ai_search');
             }
 
         } catch (error) {
@@ -1044,18 +1026,6 @@ class FashionCatalogue {
         loadMoreBtn.style.display = 'none';
         loadingIndicator.classList.add('show');
 
-        // Track load more event
-        if (window.analytics && this.currentPage > 0) {
-            window.analytics.trackEvent('click', 'load_more_button', {
-                metadata: {
-                    currentPage: this.currentPage,
-                    displayedProductsCount: this.displayedProducts.length,
-                    totalFilteredProducts: this.filteredProducts.length,
-                    filtersActive: Object.keys(this.getActiveFilters()).length
-                }
-            });
-        }
-
         setTimeout(() => {
             const startIndex = this.currentPage * this.itemsPerPage;
             const endIndex = startIndex + this.itemsPerPage;
@@ -1114,17 +1084,6 @@ class FashionCatalogue {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.addEventListener('click', (e) => {
-            // Track product click
-            if (window.analytics) {
-                window.analytics.trackProductInteraction(product, 'click', {
-                    positionInList: this.displayedProducts.indexOf(product),
-                    metadata: {
-                        currentPage: this.currentPage,
-                        isFiltered: this.filteredProducts.length < this.allProducts.length,
-                        searchQuery: this.filters.searchQuery || null
-                    }
-                });
-            }
             window.open(product.original_data.item_page_url, '_blank');
         });
 
@@ -1207,23 +1166,6 @@ class FashionCatalogue {
         const index = parseInt(dot.dataset.index);
         const container = dot.closest('.product-image-container');
 
-        // Track image navigation
-        if (window.analytics) {
-            const productCard = container.closest('.product-card');
-            const productIndex = Array.from(document.querySelectorAll('.product-card')).indexOf(productCard);
-
-            if (productIndex >= 0 && this.displayedProducts[productIndex]) {
-                window.analytics.trackProductInteraction(
-                    this.displayedProducts[productIndex],
-                    'image_navigation',
-                    {
-                        imageIndex: index,
-                        positionInList: productIndex
-                    }
-                );
-            }
-        }
-
         this.switchToImageIndex(container, index);
     }
     
@@ -1285,25 +1227,6 @@ class FashionCatalogue {
         }
 
         if (newIndex !== currentIndex) {
-            // Track analytics
-            if (window.analytics) {
-                const productCard = container.closest('.product-card');
-                const productIndex = Array.from(document.querySelectorAll('.product-card')).indexOf(productCard);
-
-                if (productIndex >= 0 && this.displayedProducts[productIndex]) {
-                    window.analytics.trackProductInteraction(
-                        this.displayedProducts[productIndex],
-                        'image_navigation_desktop_arrow',
-                        {
-                            direction: direction,
-                            fromIndex: currentIndex,
-                            toIndex: newIndex,
-                            positionInList: productIndex
-                        }
-                    );
-                }
-            }
-
             // Perform the switch
             this.switchToImageIndex(container, newIndex);
         }
@@ -1472,16 +1395,6 @@ class FashionCatalogue {
                 btn.setAttribute('aria-label', 'Remove from favorites');
                 btn.setAttribute('title', 'Remove from favorites');
             }
-
-            // Track analytics
-            if (window.analytics) {
-                window.analytics.trackEvent('click', isFavorited ? 'remove_favorite' : 'add_favorite', {
-                    productId: productId,
-                    metadata: {
-                        userId: window.authManager.getUserId()
-                    }
-                });
-            }
         } catch (error) {
             console.error('Error handling favorite:', error);
             alert('Error updating favorites. Please try again.');
@@ -1607,22 +1520,6 @@ function initializeAILoader() {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize analytics if configured
-    if (window.CONFIG && window.CONFIG.ANALYTICS_ENABLED) {
-        try {
-            window.analytics = initializeAnalytics(
-                window.CONFIG.SUPABASE_URL,
-                window.CONFIG.SUPABASE_ANON_KEY
-            );
-
-            if (window.CONFIG.DEBUG_MODE) {
-                console.log('Analytics initialized successfully');
-            }
-        } catch (error) {
-            console.error('Failed to initialize analytics:', error);
-        }
-    }
-
     // Initialize authentication system
     if (window.CONFIG && window.CONFIG.AUTH_ENABLED) {
         try {
@@ -1644,6 +1541,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (error) {
             console.error('Failed to initialize favorites:', error);
+        }
+    }
+
+    // Initialize analytics system
+    if (window.CONFIG && window.CONFIG.ANALYTICS_ENABLED) {
+        try {
+            window.analytics = initializeSimpleAnalytics(
+                window.CONFIG.SUPABASE_URL,
+                window.CONFIG.SUPABASE_ANON_KEY
+            );
+            if (window.CONFIG.DEBUG_MODE) {
+                console.log('Analytics system initialized successfully');
+            }
+        } catch (error) {
+            console.error('Failed to initialize analytics:', error);
         }
     }
 
