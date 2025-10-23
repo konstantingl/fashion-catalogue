@@ -17,6 +17,7 @@ class FashionCatalogue {
             searchQuery: ''
         };
         this.categoryAttributes = {};
+        this.attributesTaxonomy = {}; // Will hold the attributes taxonomy from JSON
         this.isLoading = false;
         this.activeDropdown = null;
 
@@ -38,8 +39,9 @@ class FashionCatalogue {
         resultsCount.textContent = 'Loading products...';
 
         try {
-            // Load filters and featured products in parallel
+            // Load taxonomy, filters and featured products in parallel
             await Promise.all([
+                this.loadAttributesTaxonomy(),
                 this.loadFilters(),
                 this.loadFeaturedProducts()
             ]);
@@ -58,6 +60,54 @@ class FashionCatalogue {
                 window.favoritesManager.refreshFavoritesUI();
             }
         }, 1000);
+    }
+
+    async loadAttributesTaxonomy() {
+        try {
+            const response = await fetch('/attributes_taxonomy.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load taxonomy: ${response.status}`);
+            }
+            this.attributesTaxonomy = await response.json();
+            console.log('Loaded attributes taxonomy for', Object.keys(this.attributesTaxonomy).length, 'categories');
+        } catch (error) {
+            console.error('Error loading attributes taxonomy:', error);
+            this.attributesTaxonomy = {};
+        }
+    }
+
+    // Map UI category names to taxonomy keys
+    getCategoryTaxonomyKey(uiCategoryName) {
+        // Convert UI name to taxonomy key format
+        // e.g., "Shirts & Blouses" -> "shirts_blouses", "T-Shirts" -> "tshirts"
+        const normalized = uiCategoryName
+            .toLowerCase()
+            .replace(/&/g, '')           // Remove &
+            .replace(/\s+/g, '_')        // Spaces to underscores
+            .replace(/-/g, '_')          // Hyphens to underscores
+            .replace(/_+/g, '_')         // Multiple underscores to single
+            .replace(/^_|_$/g, '');      // Trim underscores
+
+        // Check if this key exists in taxonomy
+        if (this.attributesTaxonomy[normalized]) {
+            return normalized;
+        }
+
+        // Try some common variations
+        const variations = [
+            normalized,
+            normalized.replace('_', ''),  // e.g., "tshirts" from "t_shirts"
+            normalized + 's',              // Add plural
+            normalized.slice(0, -1)        // Remove plural
+        ];
+
+        for (const variant of variations) {
+            if (this.attributesTaxonomy[variant]) {
+                return variant;
+            }
+        }
+
+        return null;
     }
 
     async loadFilters() {
@@ -472,22 +522,33 @@ class FashionCatalogue {
 
         if (this.filters.categories.size === 0) return;
 
-        // Get all attributes for selected categories
-        const attributeValues = {};
+        // Get all attributes for selected categories from taxonomy
+        const attributeFields = new Set();
+        const attributeEnums = {};
+
         Array.from(this.filters.categories).forEach(category => {
-            if (this.categoryAttributes[category]) {
-                this.categoryAttributes[category].forEach(attr => {
-                    if (!attributeValues[attr]) {
-                        attributeValues[attr] = new Set();
-                    }
-                    
-                    this.allProducts.forEach(item => {
-                        if (item.enriched_category === category && 
-                            item.attributes?.[attr]?.value) {
-                            attributeValues[attr].add(item.attributes[attr].value);
+            const taxonomyKey = this.getCategoryTaxonomyKey(category);
+
+            if (taxonomyKey && this.attributesTaxonomy[taxonomyKey]) {
+                const categoryData = this.attributesTaxonomy[taxonomyKey];
+
+                // Add all fields for this category
+                if (categoryData.fields) {
+                    categoryData.fields.forEach(field => attributeFields.add(field));
+                }
+
+                // Collect enum values for each attribute
+                if (categoryData.enums) {
+                    Object.keys(categoryData.enums).forEach(attr => {
+                        if (!attributeEnums[attr]) {
+                            attributeEnums[attr] = new Set();
                         }
+                        // Add all enum values for this attribute
+                        categoryData.enums[attr].forEach(value => {
+                            attributeEnums[attr].add(value);
+                        });
                     });
-                });
+                }
             }
         });
 
@@ -496,10 +557,13 @@ class FashionCatalogue {
         const clearAllButton = document.getElementById('clear-all-filters');
 
         // Create attribute filter buttons and insert before the clear all button
-        Object.keys(attributeValues).sort().forEach(attr => {
-            const filterContainer = this.createDynamicAttributeFilter(attr, attributeValues[attr]);
-            filterContainer.classList.add('dynamic-filter-container'); // Add class for easy removal
-            filterButtonsContainer.insertBefore(filterContainer, clearAllButton);
+        // Sort attributes to ensure consistent ordering
+        Array.from(attributeFields).sort().forEach(attr => {
+            if (attributeEnums[attr] && attributeEnums[attr].size > 0) {
+                const filterContainer = this.createDynamicAttributeFilter(attr, attributeEnums[attr]);
+                filterContainer.classList.add('dynamic-filter-container'); // Add class for easy removal
+                filterButtonsContainer.insertBefore(filterContainer, clearAllButton);
+            }
         });
     }
 

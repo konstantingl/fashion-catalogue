@@ -39,16 +39,19 @@ export async function getFilteredProducts(filters = {}, limit = 50) {
           // For each attribute value, we need to check if the product has that attribute with that value
           // Using JSONB contains operator
           // Format: attributes @> '{"attribute_name": {"value": "attribute_value"}}'
-          const conditions = values.map(value => ({
-            [attr]: { value: value }
-          }));
 
-          // Use OR logic for multiple values of the same attribute
-          const orFilters = conditions.map(condition =>
-            `attributes @> '${JSON.stringify(condition)}'`
-          ).join(' OR ');
+          if (values.length === 1) {
+            // Single value: use direct containment check
+            const condition = { [attr]: { value: values[0] } };
+            query = query.contains('attributes', condition);
+          } else {
+            // Multiple values: use OR logic
+            const orFilters = values.map(value =>
+              `attributes @> '${JSON.stringify({ [attr]: { value: value } })}'`
+            ).join(',');
 
-          query = query.or(orFilters);
+            query = query.or(orFilters);
+          }
         }
       }
     }
