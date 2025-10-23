@@ -7,31 +7,31 @@ export async function getFilters() {
   try {
     console.log('Fetching all brands and categories...');
 
-    // Get distinct brands
-    const { data: brandData, error: brandError } = await supabaseAdmin
+    // Use RPC to get distinct values (more efficient for large datasets)
+    // Get all products and extract unique values client-side since Supabase doesn't have DISTINCT easily
+    const { data: products, error } = await supabaseAdmin
       .from('products')
-      .select('brand')
-      .not('brand', 'is', null);
+      .select('brand, enriched_category')
+      .not('brand', 'is', null)
+      .not('enriched_category', 'is', null)
+      .limit(10000); // Get a large sample
 
-    if (brandError) {
-      throw new Error(`Error fetching brands: ${brandError.message}`);
+    if (error) {
+      throw new Error(`Error fetching products: ${error.message}`);
     }
 
-    // Get distinct categories
-    const { data: categoryData, error: categoryError } = await supabaseAdmin
-      .from('products')
-      .select('enriched_category')
-      .not('enriched_category', 'is', null);
-
-    if (categoryError) {
-      throw new Error(`Error fetching categories: ${categoryError.message}`);
+    if (!products || products.length === 0) {
+      return {
+        brands: [],
+        categories: []
+      };
     }
 
     // Extract unique values
-    const brands = [...new Set(brandData.map(item => item.brand))].sort();
-    const categories = [...new Set(categoryData.map(item => item.enriched_category))].sort();
+    const brands = [...new Set(products.map(item => item.brand).filter(Boolean))].sort();
+    const categories = [...new Set(products.map(item => item.enriched_category).filter(Boolean))].sort();
 
-    console.log(`Found ${brands.length} brands and ${categories.length} categories`);
+    console.log(`Found ${brands.length} brands and ${categories.length} categories from ${products.length} products`);
 
     return {
       brands,
